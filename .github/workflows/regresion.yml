@@ -27,7 +27,7 @@ jobs:
         # El "|| true" evita que el workflow se cancele si el test falla, 
         # permitiendo que el reporte de Allure se genere y muestre el error.
         run: |
-          pytest tests/web.py --alluredir=allure-results || true
+          pytest web.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
