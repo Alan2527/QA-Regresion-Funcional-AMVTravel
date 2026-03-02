@@ -1,0 +1,51 @@
+name: AMV Travel QA Suite
+
+on:
+  push:
+    branches: [ main ]
+  # Permite ejecutar el workflow manualmente desde la pestaña Actions en GitHub
+  workflow_dispatch: 
+
+jobs:
+  test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: |
+          # Asegurate de que requirements.txt tenga: pytest, selenium, allure-pytest
+          pip install -r requirements.txt
+
+      - name: Ejecutar Test Web AMV
+        # El "|| true" evita que el workflow se cancele si el test falla, 
+        # permitiendo que el reporte de Allure se genere y muestre el error.
+        run: |
+          pytest tests/web.py --alluredir=allure-results || true
+
+      - name: Generar carpeta con Fecha y Hora
+        run: |
+          # Creamos una variable con formato legible: Año-Mes-Día_Hora-Min
+          echo "REPORT_DATE=$(date +'%Y-%m-%d_%H-%M')" >> $GITHUB_ENV
+
+      - name: Generar Reporte Allure
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+          keep_histories: 1 # Mantiene el historial limpio
+
+      - name: Desplegar a GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
