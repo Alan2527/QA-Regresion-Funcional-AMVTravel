@@ -30,7 +30,7 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             # Esperamos a que la lista desplegable muestre la opción correcta y la clickeamos
             opcion_destino = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Bariloche, Argentina')]")), message="No se desplegó la opción 'Bariloche, Argentina' en el autocompletado")
             opcion_destino.click()
-            time.sleep(1) # Le damos un segundo para que el input fije el valor seleccionado
+            time.sleep(1) 
 
             # 3. Calendario
             input_calendario = driver.find_element(By.ID, "txtCalendar")
@@ -40,24 +40,24 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="Tab_Destino_y_Fechas", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_1_a_3", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error al ingresar destino o fechas. Detalle del elemento: {str(e)}")
+            pytest.fail(f"Error al ingresar destino o fechas. Detalle: {str(e)}")
 
     with allure.step("4 a 9. Configurar habitaciones y pasajeros"):
         try:
             # 4. Hover para abrir el dropdown de pasajeros
-            btn_pasajeros = wait.until(EC.presence_of_element_located((By.XPATH, "//span[contains(@class, 'pink-btn') and contains(@class, 'passengerQuantity-botton')]")), message="No se encontró el botón de pasajeros para hacer hover")
+            btn_pasajeros = wait.until(EC.presence_of_element_located((By.XPATH, "//span[contains(@class, 'pink-btn') and contains(@class, 'passengerQuantity-botton')]")), message="No se encontró el botón de pasajeros")
             actions.move_to_element(btn_pasajeros).perform()
             time.sleep(1) 
 
-            # 5. Sumar 2 habitaciones (doble click)
+            # 5. Sumar 2 habitaciones
             btn_rooms = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@onclick=\"QuantityModify(+1,'rooms')\"]")), message="No se encontró el botón para sumar habitaciones")
             actions.double_click(btn_rooms).perform()
 
-            # 6. Sumar 2 adultos (doble click)
+            # 6. Sumar 2 adultos
             btn_adults = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@onclick=\"QuantityModify(1,'adults')\"]")), message="No se encontró el botón para sumar adultos")
             actions.double_click(btn_adults).perform()
 
-            # 7. Sumar 2 menores (doble click)
+            # 7. Sumar 2 menores
             btn_children = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@onclick=\"ChildrenModify(true)\"]")), message="No se encontró el botón para sumar menores")
             actions.double_click(btn_children).perform()
             time.sleep(1) 
@@ -66,7 +66,7 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             select_edad1 = Select(driver.find_element(By.ID, "childrenAge1"))
             select_edad1.select_by_visible_text("9")
 
-            # 9. Volver a hacer hover por si se cerró, y seleccionar Edad menor 2
+            # 9. Edad menor 2
             actions.move_to_element(btn_pasajeros).perform()
             time.sleep(0.5)
             select_edad2 = Select(driver.find_element(By.ID, "childrenAge2"))
@@ -75,42 +75,42 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="Configuracion_Pasajeros", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_4_a_9", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error al configurar los pasajeros. Detalle del elemento: {str(e)}")
+            pytest.fail(f"Error al configurar los pasajeros. Detalle: {str(e)}")
 
     with allure.step("10. Ejecutar Búsqueda y esperar resultados"):
         try:
-            wait.until(EC.element_to_be_clickable((By.ID, "btnSearch")), message="No se encontró el botón de Búsqueda (btnSearch)").click()
+            wait.until(EC.element_to_be_clickable((By.ID, "btnSearch")), message="No se encontró el botón de Búsqueda").click()
             
-            # Esperamos que cargue la lista usando el primer filtro como ancla
             wait_largo = WebDriverWait(driver, 45)
             wait_largo.until(EC.presence_of_element_located((By.XPATH, "//span[@title='Disponibilidad']")), message="La búsqueda superó los 45 segundos y no cargaron los filtros")
             time.sleep(2) 
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_10", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error al ejecutar la búsqueda o esperar los resultados. Detalle: {str(e)}")
+            pytest.fail(f"Error al ejecutar la búsqueda. Detalle: {str(e)}")
 
     with allure.step("11 a 15. Aplicar Filtros laterales"):
         try:
-            # 11 al 14. Clickear los spans usando su atributo title
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Disponibilidad']")), message="No se encontró el filtro Disponibilidad").click()
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Zona Catedral ']")), message="No se encontró el filtro Zona Catedral").click()
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Apart']")), message="No se encontró el filtro Apart").click()
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Aire Acondicionado']")), message="No se encontró el filtro Aire Acondicionado").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Disponibilidad']")), message="Filtro Disponibilidad no encontrado").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Zona Catedral ']")), message="Filtro Zona Catedral no encontrado").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Apart']")), message="Filtro Apart no encontrado").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Aire Acondicionado']")), message="Filtro Aire Acondicionado no encontrado").click()
 
-            # 15. Click en aplicar filtros (Mantenemos el JS click acá por ser un tag <a> que a veces recibe overlays)
-            btn_aplicar_filtros = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphSideMain_lnkFilter")), message="No se encontró el botón de Aplicar Filtros")
+            btn_aplicar_filtros = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphSideMain_lnkFilter")), message="Botón Aplicar Filtros no encontrado")
             driver.execute_script("arguments[0].click();", btn_aplicar_filtros)
             
             time.sleep(5) 
             allure.attach(driver.get_screenshot_as_png(), name="Filtros_Aplicados", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_11_a_15", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error al intentar clickear los filtros por título. Detalle del elemento: {str(e)}")
+            pytest.fail(f"Error al clickear filtros. Detalle: {str(e)}")
 
     with allure.step("16. Validar panel de resultados"):
         try:
             panel_resultados = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_updMainPanel")), message="No cargó el panel de resultados principal")
             assert panel_resultados is not None, "El div de resultados no apareció."
+            
+            # Captura agregada según tu solicitud
+            allure.attach(driver.get_screenshot_as_png(), name="Panel_Resultados_Validado", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_16", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Error en validación del panel: {str(e)}")
@@ -126,6 +126,9 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             
             caja_precio = driver.find_element(By.CSS_SELECTOR, "div[style*='background-color: #444444']")
             assert "Desde" in caja_precio.text, "Falta el texto 'Desde' en la caja de precio"
+            
+            # Captura agregada justo antes de hacer click para validar visualmente la card
+            allure.attach(driver.get_screenshot_as_png(), name="Card_Hotel_Validada", attachment_type=allure.attachment_type.PNG)
             
             btn_ver_mas = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a#verMasbtn.btn.pink-btn.apreload")), message="No se encontró el botón 'Ver Más'")
             btn_ver_mas.click()
@@ -151,12 +154,19 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_18", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Fallo al validar los componentes internos del hotel. Detalle: {str(e)}")
 
-    with allure.step("19 a 22. Sumar habitación, validar input y confirmar reserva"):
+    with allure.step("19. Sumar habitación"):
         try:
-            # 19. Click en sumar
+            # Ahora este paso es individual
             btn_suma = wait.until(EC.element_to_be_clickable((By.ID, "72260-185813-105-1-2-Integration-26611-suma")), message="No se encontró el botón sumar habitación (ID 72260...)")
             btn_suma.click()
-            
+            time.sleep(1)
+            allure.attach(driver.get_screenshot_as_png(), name="Habitacion_Sumada", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_19", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Error al sumar habitación. Detalle: {str(e)}")
+
+    with allure.step("20 a 22. Validar input y confirmar reserva"):
+        try:
             # 20. Validar que el input cambió (no es 0)
             input_cantidad = driver.find_element(By.ID, "185813")
             valor_input = input_cantidad.get_attribute("value")
@@ -166,14 +176,26 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             btn_guardar = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@onclick, 'Guardar(185813')]")), message="No se encontró el botón de Guardar Reserva")
             btn_guardar.click()
 
-            # 22. Validar Alert
+            # 22. Validar Alert y buscar errores
             alert = wait.until(EC.alert_is_present(), message="No apareció ningún alert de confirmación de reserva")
             texto_alert = alert.text.lower()
             allure.attach(texto_alert, name="Texto_del_Alert", attachment_type=allure.attachment_type.TEXT)
             
-            assert "error" not in texto_alert, f"La reserva falló. El alert contiene un error: {alert.text}"
+            if "error" in texto_alert:
+                alert.accept() # Debemos aceptar el alert primero para poder sacar la foto
+                time.sleep(1)
+                allure.attach(driver.get_screenshot_as_png(), name="Error_En_Reserva", attachment_type=allure.attachment_type.PNG)
+                pytest.fail(f"La reserva falló. El alert contiene un error: {texto_alert}")
             
-            alert.accept()
+            alert.accept() # Si no hubo error, lo acepta normalmente
+            time.sleep(1)
+            allure.attach(driver.get_screenshot_as_png(), name="Confirmacion_Exitosa", attachment_type=allure.attachment_type.PNG)
+            
         except Exception as e:
-            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_19_a_22", attachment_type=allure.attachment_type.PNG)
+            # Bloque de seguridad por si falla antes del alert o al buscar el input
+            try:
+                driver.switch_to.alert.accept() # Cerramos alert residual si quedó abierto
+            except:
+                pass
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_20_a_22", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Error en la confirmación final de la reserva. Detalle: {str(e)}")
