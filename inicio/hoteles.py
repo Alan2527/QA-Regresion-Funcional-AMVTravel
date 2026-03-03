@@ -109,7 +109,6 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             panel_resultados = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_updMainPanel")), message="No cargó el panel de resultados principal")
             assert panel_resultados is not None, "El div de resultados no apareció."
             
-            # Captura agregada según tu solicitud
             allure.attach(driver.get_screenshot_as_png(), name="Panel_Resultados_Validado", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_16", attachment_type=allure.attachment_type.PNG)
@@ -127,7 +126,6 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             caja_precio = driver.find_element(By.CSS_SELECTOR, "div[style*='background-color: #444444']")
             assert "Desde" in caja_precio.text, "Falta el texto 'Desde' en la caja de precio"
             
-            # Captura agregada justo antes de hacer click para validar visualmente la card
             allure.attach(driver.get_screenshot_as_png(), name="Card_Hotel_Validada", attachment_type=allure.attachment_type.PNG)
             
             btn_ver_mas = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a#verMasbtn.btn.pink-btn.apreload")), message="No se encontró el botón 'Ver Más'")
@@ -156,8 +154,7 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
 
     with allure.step("19. Sumar habitación"):
         try:
-            # Ahora este paso es individual
-            btn_suma = wait.until(EC.element_to_be_clickable((By.ID, "72260-185813-105-1-2-Integration-26611-suma")), message="No se encontró el botón sumar habitación (ID 72260...)")
+            btn_suma = wait.until(EC.element_to_be_clickable((By.ID, "72260-185813-105-1-2-Integration-26611-suma")), message="No se encontró el botón sumar habitación")
             btn_suma.click()
             time.sleep(1)
             allure.attach(driver.get_screenshot_as_png(), name="Habitacion_Sumada", attachment_type=allure.attachment_type.PNG)
@@ -178,23 +175,48 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
 
             # 22. Validar Alert y buscar errores
             alert = wait.until(EC.alert_is_present(), message="No apareció ningún alert de confirmación de reserva")
-            texto_alert = alert.text.lower()
-            allure.attach(texto_alert, name="Texto_del_Alert", attachment_type=allure.attachment_type.TEXT)
+            texto_alert_original = alert.text
+            texto_alert = texto_alert_original.lower()
+            allure.attach(texto_alert_original, name="Texto_del_Alert", attachment_type=allure.attachment_type.TEXT)
             
+            # Aceptamos el alert real para desbloquear el navegador
+            alert.accept() 
+            
+            # --- INYECCIÓN JS (Truco para fotografiar el Alert) ---
+            js_script = """
+            var alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.backgroundColor = '#f8f9fa';
+            alertDiv.style.border = '1px solid #dee2e6';
+            alertDiv.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+            alertDiv.style.padding = '20px';
+            alertDiv.style.zIndex = '999999';
+            alertDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+            alertDiv.style.fontSize = '14px';
+            alertDiv.style.color = '#212529';
+            alertDiv.style.borderRadius = '0.25rem';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.style.textAlign = 'center';
+            alertDiv.innerHTML = '<strong>Mensaje del Sistema:</strong><br><br>' + arguments[0];
+            document.body.appendChild(alertDiv);
+            """
+            driver.execute_script(js_script, texto_alert_original)
+            time.sleep(1) # Damos tiempo a que se dibuje en pantalla
+            # --------------------------------------------------------
+
             if "error" in texto_alert:
-                alert.accept() # Debemos aceptar el alert primero para poder sacar la foto
-                time.sleep(1)
                 allure.attach(driver.get_screenshot_as_png(), name="Error_En_Reserva", attachment_type=allure.attachment_type.PNG)
-                pytest.fail(f"La reserva falló. El alert contiene un error: {texto_alert}")
+                pytest.fail(f"La reserva falló. El alert contiene un error: {texto_alert_original}")
             
-            alert.accept() # Si no hubo error, lo acepta normalmente
-            time.sleep(1)
             allure.attach(driver.get_screenshot_as_png(), name="Confirmacion_Exitosa", attachment_type=allure.attachment_type.PNG)
             
         except Exception as e:
-            # Bloque de seguridad por si falla antes del alert o al buscar el input
+            # Bloque de seguridad por si falla antes del alert
             try:
-                driver.switch_to.alert.accept() # Cerramos alert residual si quedó abierto
+                driver.switch_to.alert.accept() 
             except:
                 pass
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_20_a_22", attachment_type=allure.attachment_type.PNG)
