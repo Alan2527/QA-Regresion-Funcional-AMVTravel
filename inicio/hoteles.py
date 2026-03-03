@@ -81,8 +81,9 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
         try:
             wait.until(EC.element_to_be_clickable((By.ID, "btnSearch")), message="No se encontró el botón de Búsqueda (btnSearch)").click()
             
+            # Esperamos que cargue la lista usando el primer filtro como ancla
             wait_largo = WebDriverWait(driver, 45)
-            wait_largo.until(EC.presence_of_element_located((By.ID, "ctl00_cphSideMain_ctrlDispAndFamilyPlanFilter_repHotelInfo_ctl00_CheckBox1")), message="La búsqueda superó los 45 segundos y no cargó el CheckBox de filtros")
+            wait_largo.until(EC.presence_of_element_located((By.XPATH, "//span[@title='Disponibilidad']")), message="La búsqueda superó los 45 segundos y no cargaron los filtros")
             time.sleep(2) 
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_10", attachment_type=allure.attachment_type.PNG)
@@ -90,18 +91,13 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
 
     with allure.step("11 a 15. Aplicar Filtros laterales"):
         try:
-            # 11 al 14. Checkboxes usando JS
-            check1 = driver.find_element(By.ID, "ctl00_cphSideMain_ctrlDispAndFamilyPlanFilter_repHotelInfo_ctl00_CheckBox1")
-            check2 = driver.find_element(By.ID, "ctl02_cphSideMain_ctrlDistrictFilter_repHotelInfo_ctl01_CheckBox1")
-            check3 = driver.find_element(By.ID, "ctl04_cphSideMain_ctrlCategoryFilter_repHotelInfo_ctl02_CheckBox1")
-            check4 = driver.find_element(By.ID, "ctl00_cphSideMain_ctrlAmenityFilter_repHotelInfo_ctl02_CheckBox1")
+            # 11 al 14. Clickear los spans usando su atributo title
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Disponibilidad']")), message="No se encontró el filtro Disponibilidad").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Zona Catedral ']")), message="No se encontró el filtro Zona Catedral").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Apart']")), message="No se encontró el filtro Apart").click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//span[@title='Aire Acondicionado']")), message="No se encontró el filtro Aire Acondicionado").click()
 
-            driver.execute_script("arguments[0].click();", check1)
-            driver.execute_script("arguments[0].click();", check2)
-            driver.execute_script("arguments[0].click();", check3)
-            driver.execute_script("arguments[0].click();", check4)
-
-            # 15. Click en aplicar filtros
+            # 15. Click en aplicar filtros (Mantenemos el JS click acá por ser un tag <a> que a veces recibe overlays)
             btn_aplicar_filtros = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphSideMain_lnkFilter")), message="No se encontró el botón de Aplicar Filtros")
             driver.execute_script("arguments[0].click();", btn_aplicar_filtros)
             
@@ -109,7 +105,7 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="Filtros_Aplicados", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_11_a_15", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error al intentar clickear los filtros. Detalle del elemento: {str(e)}")
+            pytest.fail(f"Error al intentar clickear los filtros por título. Detalle del elemento: {str(e)}")
 
     with allure.step("16. Validar panel de resultados"):
         try:
