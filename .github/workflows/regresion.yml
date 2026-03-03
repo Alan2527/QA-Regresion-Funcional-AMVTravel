@@ -27,7 +27,7 @@ jobs:
           AMV_PASS: ${{ secrets.AMV_PASS }}
 
         run: |
-          pytest inicio/login.py --alluredir=allure-results || true
+          pytest inicio/login.py inicio/hoteles.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
