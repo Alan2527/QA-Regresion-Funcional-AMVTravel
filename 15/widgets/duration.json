@@ -1,1 +1,0 @@
-[{"uid":"9d69d2f1dbdc2ebd","name":"test_login_amv","time":{"start":1772559530203,"stop":1772559537112,"duration":6909},"status":"passed","severity":"normal"},{"uid":"2efba7415650a9c4","name":"test_reserva_hotel_flujo_completo","time":{"start":1772559544035,"stop":1772559597738,"duration":53703},"status":"failed","severity":"normal"}]
