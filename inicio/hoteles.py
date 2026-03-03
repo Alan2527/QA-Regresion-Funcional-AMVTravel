@@ -21,10 +21,16 @@ def test_reserva_hotel_flujo_completo(logged_in_driver):
             tab_hoteles.click()
             time.sleep(1) 
 
-            # 2. Destino
+            # 2. Destino (Manejo de Autocompletado)
             input_destino = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctl00_ctrlHotelSearchControl_searchDestination")), message="No se encontró el input de Destino")
             input_destino.clear()
-            input_destino.send_keys("Bariloche, Argentina")
+            # Escribimos solo una parte para disparar el buscador predictivo
+            input_destino.send_keys("Bariloche")
+
+            # Esperamos a que la lista desplegable muestre la opción correcta y la clickeamos
+            opcion_destino = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Bariloche, Argentina')]")), message="No se desplegó la opción 'Bariloche, Argentina' en el autocompletado")
+            opcion_destino.click()
+            time.sleep(1) # Le damos un segundo para que el input fije el valor seleccionado
 
             # 3. Calendario
             input_calendario = driver.find_element(By.ID, "txtCalendar")
