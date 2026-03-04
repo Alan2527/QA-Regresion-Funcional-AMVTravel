@@ -1,0 +1,3 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","7144","test_login_amv","inicio","Wed Mar 04 14:02:12 UTC 2026","passed","Wed Mar 04 14:02:19 UTC 2026","","login","",""
+"","29979","test_reserva_hotel_flujo_completo","inicio","Wed Mar 04 14:02:26 UTC 2026","failed","Wed Mar 04 14:02:56 UTC 2026","","hoteles","",""
