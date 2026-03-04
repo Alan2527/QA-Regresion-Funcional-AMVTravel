@@ -36,6 +36,9 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             opcion_excursion.click()
             time.sleep(1)
 
+            # --- CAPTURA PREVIA A LA BÚSQUEDA (Pasos 1 al 4 completados) ---
+            allure.attach(driver.get_screenshot_as_png(), name="Formulario_Completo_Antes_Buscar", attachment_type=allure.attachment_type.PNG)
+
             # 5. Click en Buscar
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_btnSearch")), message="No se encontró el botón de Buscar (btnSearch)").click()
             
