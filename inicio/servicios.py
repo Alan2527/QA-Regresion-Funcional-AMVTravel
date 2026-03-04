@@ -1,0 +1,155 @@
+import pytest
+import allure
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.action_chains import ActionChains
+
+@allure.feature("Motor de Reservas - Servicios")
+@allure.story("Búsqueda, filtrado y reserva de excursión en Bariloche")
+def test_reserva_servicio_flujo_completo(logged_in_driver):
+    driver = logged_in_driver
+    wait = WebDriverWait(driver, 15)
+
+    with allure.step("1 a 5. Seleccionar pestaña Servicios, ingresar destino, tipo y buscar"):
+        try:
+            # 2. Click en la pestaña de Servicios
+            tab_servicios = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='#tabServices']")), message="No se encontró la pestaña a[href='#tabServices']")
+            tab_servicios.click()
+            time.sleep(1) 
+
+            # 3. Dropdown Destino (Ciudad)
+            btn_ciudad = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_updServicesCity .ts-control")), message="No se encontró el control del DDL de Ciudad")
+            btn_ciudad.click()
+            time.sleep(1) # Esperamos que se despliegue la lista
+            opcion_bariloche = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'option') and contains(text(), 'Bariloche')] | //div[contains(text(), 'Bariloche')]")), message="No se encontró la opción 'Bariloche' en la lista")
+            opcion_bariloche.click()
+            time.sleep(1)
+
+            # 4. Dropdown Tipo de Servicio (Opcionales)
+            btn_tipo = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_updServicesOptionals .ts-control")), message="No se encontró el control del DDL de Tipo de Servicio")
+            btn_tipo.click()
+            time.sleep(1) # Esperamos que se despliegue la lista
+            opcion_excursion = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'option') and contains(text(), 'Excursión')] | //div[contains(text(), 'Excursión')]")), message="No se encontró la opción 'Excursión' en la lista")
+            opcion_excursion.click()
+            time.sleep(1)
+
+            # 5. Click en Buscar
+            wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_btnSearch")), message="No se encontró el botón de Buscar (btnSearch)").click()
+            
+            # Espera larga para los resultados
+            wait_largo = WebDriverWait(driver, 45)
+            wait_largo.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.panelShadow.col-sm-6")), message="La búsqueda superó los 45 segundos y no cargaron los resultados de servicios")
+            time.sleep(2)
+            
+            allure.attach(driver.get_screenshot_as_png(), name="Busqueda_Ejecutada", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_1_a_5", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Error al ingresar filtros de búsqueda. Detalle: {str(e)}")
+
+    with allure.step("6. Validar panel de resultados (Cards de Servicios)"):
+        try:
+            # a. Validar que exista la card
+            assert driver.find_elements(By.CSS_SELECTOR, "div.panelShadow.col-sm-6"), "No se encontró ningún div con la clase 'panelShadow col-sm-6'"
+            
+            # b, c, d, e, f. Validar componentes internos de la card
+            assert driver.find_elements(By.CSS_SELECTOR, "img[style*='width: 450px']"), "Falta la imagen de 450x323px en la card"
+            assert driver.find_elements(By.CSS_SELECTOR, "h4.h4Span"), "Falta el nombre del servicio (h4Span)"
+            assert driver.find_elements(By.CSS_SELECTOR, "table[style*='text-align:center'], table[style*='text-align: center']"), "Falta la tabla de precios/tipo centrada"
+            assert driver.find_elements(By.CSS_SELECTOR, "div.divservlimit"), "Falta la descripción del servicio (divservlimit)"
+            assert driver.find_elements(By.CSS_SELECTOR, "a.apreload.btn.btnGray.pink-btn"), "Falta el botón de selección/ver más"
+            
+            allure.attach(driver.get_screenshot_as_png(), name="Resultados_Validados", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_6", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Error en validación de las cards de servicio: {str(e)}")
+
+    with allure.step("7 y 8. Click en servicio y validar detalle interno"):
+        try:
+            # 7. Click en el botón
+            btn_seleccionar = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.apreload.btn.btnGray.pink-btn")), message="No se encontró el botón para entrar al servicio")
+            btn_seleccionar.click()
+            time.sleep(3) # Espera a que cargue el detalle
+
+            # 8. Validaciones de la vista de detalle
+            assert wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h3.h3ServiceName")), message="No cargó el Detalle del Servicio (falta h3ServiceName)")
+            assert driver.find_elements(By.CSS_SELECTOR, "img.popu"), "Falta la imagen del servicio (popu)"
+            assert driver.find_elements(By.CSS_SELECTOR, "div.detailsdiv"), "Faltan los detalles del servicio (detailsdiv)"
+            assert driver.find_elements(By.CSS_SELECTOR, "table.table.table-bordered.table-striped"), "Falta la tabla de precios detallada"
+
+            allure.attach(driver.get_screenshot_as_png(), name="Detalle_Servicio_Validado", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_7_a_8", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Fallo al ingresar o validar el detalle del servicio. Detalle: {str(e)}")
+
+    with allure.step("9 y 10. Seleccionar pasajeros"):
+        try:
+            # 9. Primer select (Pax 1)
+            select_pax_1 = Select(wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMainSlider$lvServiceRates$ctrl0$ctrlPaxQuantityControl$ddPax")), message="No se encontró el primer DDL de pasajeros"))
+            select_pax_1.select_by_visible_text("2")
+
+            # 10. Segundo select (Pax 2)
+            select_pax_2 = Select(wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMainSlider$lvServiceRates$ctrl1$ctrlPaxQuantityControl$ddPax")), message="No se encontró el segundo DDL de pasajeros"))
+            select_pax_2.select_by_visible_text("2")
+            
+            time.sleep(1)
+            allure.attach(driver.get_screenshot_as_png(), name="Pasajeros_Seleccionados", attachment_type=allure.attachment_type.PNG)
+        except Exception as e:
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_9_a_10", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Error al seleccionar la cantidad de pasajeros. Detalle: {str(e)}")
+
+    with allure.step("11 y 12. Confirmar reserva y validar alerta"):
+        try:
+            # 11. Click en Reservar
+            btn_reservar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_lnkBookService")), message="No se encontró el botón de Reservar Servicio")
+            btn_reservar.click()
+
+            # 12. Validar Alert y buscar errores
+            alert = wait.until(EC.alert_is_present(), message="No apareció ningún alert de confirmación de reserva")
+            texto_alert_original = alert.text
+            texto_alert = texto_alert_original.lower()
+            allure.attach(texto_alert_original, name="Texto_del_Alert", attachment_type=allure.attachment_type.TEXT)
+            
+            # Aceptamos el alert real para desbloquear el navegador
+            alert.accept() 
+            
+            # --- INYECCIÓN JS (Truco para fotografiar el Alert) ---
+            js_script = """
+            var alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.backgroundColor = '#f8f9fa';
+            alertDiv.style.border = '1px solid #dee2e6';
+            alertDiv.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+            alertDiv.style.padding = '20px';
+            alertDiv.style.zIndex = '999999';
+            alertDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+            alertDiv.style.fontSize = '14px';
+            alertDiv.style.color = '#212529';
+            alertDiv.style.borderRadius = '0.25rem';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.style.textAlign = 'center';
+            alertDiv.innerHTML = '<strong>Mensaje del Sistema:</strong><br><br>' + arguments[0];
+            document.body.appendChild(alertDiv);
+            """
+            driver.execute_script(js_script, texto_alert_original)
+            time.sleep(1) 
+            # --------------------------------------------------------
+
+            if "error" in texto_alert:
+                allure.attach(driver.get_screenshot_as_png(), name="Error_En_Reserva", attachment_type=allure.attachment_type.PNG)
+                pytest.fail(f"La reserva de servicio falló. El alert contiene un error: {texto_alert_original}")
+            
+            allure.attach(driver.get_screenshot_as_png(), name="Confirmacion_Exitosa", attachment_type=allure.attachment_type.PNG)
+            
+        except Exception as e:
+            try:
+                driver.switch_to.alert.accept() 
+            except:
+                pass
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_11_a_12", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Error en la confirmación final de la reserva de servicio. Detalle: {str(e)}")
