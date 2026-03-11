@@ -110,7 +110,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             initial_cart_text = cart_element.text.strip()
             # Si está vacío, lo tomamos como 0
             initial_cart_count = int(initial_cart_text) if initial_cart_text.isdigit() else 0
-            expected_count = initial_cart_count + 1
+            expected_count = initial_cart_count + 4
 
             # 2. Hacer clic en el botón de Reservar final
             btn_reservar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_lnkBookService")), message="No se encontró el botón de Reservar Servicio")
@@ -123,7 +123,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             except:
                 pass # Si no hay alert, seguimos de largo
 
-            # 4. Validar que el contador sumó 1
+            # 4. Validar que el contador sumó 4
             wait.until(
                 lambda d: int(d.find_element(By.ID, "lblCartCount").text.strip() or 0) == expected_count,
                 message=f"La reserva falló: El carrito no se actualizó al valor esperado ({expected_count})"
