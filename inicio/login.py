@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 @allure.story("Login de usuario")
 @allure.severity(allure.severity_level.BLOCKER)
 @allure.description("""
-Este caso de prueba valida el acceso principal al sistema Backoffice.
+Este caso de prueba valida el acceso principal al sistema web de reservas.
 Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E dependen de una sesión válida.
 1. Navegación a qa.amv.travel.
 2. Inyección de credenciales seguras mediante GitHub Secrets.
