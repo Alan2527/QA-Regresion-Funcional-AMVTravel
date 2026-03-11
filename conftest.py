@@ -72,9 +72,7 @@ def pytest_sessionfinish(session, exitstatus):
     
     # Escribimos las variables que queremos que aparezcan en el panel "Environment"
     with open(env_file, "w", encoding="utf-8") as f:
-        f.write("Navegador=Chrome (Headless)\n")
         f.write("Entorno=QA\n")
+        f.write("Navegador=Chrome (Headless)\n")
         f.write("URL_Frontend=https://qa.amv.travel/\n")
-        f.write("URL_Backoffice=https://qa.bo.amv.travel\n")
-        f.write("Sistema=Motor_Multidestinos\n")
         f.write("Framework=Pytest+Selenium\n")
