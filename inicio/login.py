@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-@allure.feature("Frontend AMV Travel")
+@allure.feature("Login")
 @allure.story("Login de usuario")
 def test_login_amv(driver):
     wait = WebDriverWait(driver, 15)
