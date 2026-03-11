@@ -103,56 +103,35 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_9_a_10", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Error al seleccionar la cantidad de pasajeros. Detalle: {str(e)}")
 
-    with allure.step("11 y 12. Confirmar reserva y validar alerta"):
+    with allure.step("11 y 12. Confirmar reserva y validar incremento en el carrito"):
         try:
-            # 11. Click en Reservar
+            # 1. Obtener el valor actual del carrito ANTES de reservar
+            cart_element = wait.until(EC.presence_of_element_located((By.ID, "lblCartCount")), message="No se encontró el contador del carrito")
+            initial_cart_text = cart_element.text.strip()
+            # Si está vacío, lo tomamos como 0
+            initial_cart_count = int(initial_cart_text) if initial_cart_text.isdigit() else 0
+            expected_count = initial_cart_count + 1
+
+            # 2. Hacer clic en el botón de Reservar final
             btn_reservar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_lnkBookService")), message="No se encontró el botón de Reservar Servicio")
             btn_reservar.click()
 
-            # 12. Validar Alert y buscar errores
-            alert = wait.until(EC.alert_is_present(), message="No apareció ningún alert de confirmación de reserva")
-            texto_alert_original = alert.text
-            texto_alert = texto_alert_original.lower()
-            allure.attach(texto_alert_original, name="Texto_del_Alert", attachment_type=allure.attachment_type.TEXT)
-            
-            # Aceptamos el alert real para desbloquear el navegador
-            alert.accept() 
-            
-            # --- INYECCIÓN JS (Truco para fotografiar el Alert) ---
-            js_script = """
-            var alertDiv = document.createElement('div');
-            alertDiv.style.position = 'fixed';
-            alertDiv.style.top = '20px';
-            alertDiv.style.left = '50%';
-            alertDiv.style.transform = 'translateX(-50%)';
-            alertDiv.style.backgroundColor = '#f8f9fa';
-            alertDiv.style.border = '1px solid #dee2e6';
-            alertDiv.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
-            alertDiv.style.padding = '20px';
-            alertDiv.style.zIndex = '999999';
-            alertDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-            alertDiv.style.fontSize = '14px';
-            alertDiv.style.color = '#212529';
-            alertDiv.style.borderRadius = '0.25rem';
-            alertDiv.style.minWidth = '300px';
-            alertDiv.style.textAlign = 'center';
-            alertDiv.innerHTML = '<strong>Mensaje del Sistema:</strong><br><br>' + arguments[0];
-            document.body.appendChild(alertDiv);
-            """
-            driver.execute_script(js_script, texto_alert_original)
-            time.sleep(1) 
-            # --------------------------------------------------------
+            # 3. Manejar el alert si es que el sistema tira uno al confirmar
+            try:
+                alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
+                alert.accept()
+            except:
+                pass # Si no hay alert, seguimos de largo
 
-            if "error" in texto_alert:
-                allure.attach(driver.get_screenshot_as_png(), name="Error_En_Reserva", attachment_type=allure.attachment_type.PNG)
-                pytest.fail(f"La reserva de servicio falló. El alert contiene un error: {texto_alert_original}")
+            # 4. Validar que el contador sumó 1
+            wait.until(
+                lambda d: int(d.find_element(By.ID, "lblCartCount").text.strip() or 0) == expected_count,
+                message=f"La reserva falló: El carrito no se actualizó al valor esperado ({expected_count})"
+            )
             
-            allure.attach(driver.get_screenshot_as_png(), name="Confirmacion_Exitosa", attachment_type=allure.attachment_type.PNG)
+            # 5. Captura de éxito
+            allure.attach(driver.get_screenshot_as_png(), name="Reserva_Exitosa_Carrito_Actualizado", attachment_type=allure.attachment_type.PNG)
             
         except Exception as e:
-            try:
-                driver.switch_to.alert.accept() 
-            except:
-                pass
-            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_11_a_12", attachment_type=allure.attachment_type.PNG)
-            pytest.fail(f"Error en la confirmación final de la reserva de servicio. Detalle: {str(e)}")
+            allure.attach(driver.get_screenshot_as_png(), name="Fallo_Validacion_Carrito", attachment_type=allure.attachment_type.PNG)
+            pytest.fail(f"Ocurrió un error al validar el carrito. Detalle: {str(e)}")
