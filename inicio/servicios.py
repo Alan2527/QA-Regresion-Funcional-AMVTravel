@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.action_chains import ActionChains
 
-@allure.feature("Motor de Reservas - Servicios")
+@allure.feature("Reservar Servicios")
 @allure.story("Búsqueda, filtrado y reserva de excursión en Bariloche")
 def test_reserva_servicio_flujo_completo(logged_in_driver):
     driver = logged_in_driver
