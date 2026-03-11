@@ -1,0 +1,1 @@
+[{"values":["Chrome (Headless)"],"name":"Navegador"},{"values":["QA"],"name":"Entorno"},{"values":["https://qa.amv.travel/"],"name":"URL_Frontend"},{"values":["https://qa.bo.amv.travel"],"name":"URL_Backoffice"},{"values":["Motor_Multidestinos"],"name":"Sistema"},{"values":["Pytest+Selenium"],"name":"Framework"}]
