@@ -51,3 +51,30 @@ def logged_in_driver(driver):
     time.sleep(3) 
     
     yield driver
+
+# =================================================================
+# ALLURE ENVIRONMENT
+# =================================================================
+
+def pytest_sessionfinish(session, exitstatus):
+    """
+    Hook de pytest que se ejecuta al finalizar toda la suite de pruebas.
+    Genera el archivo environment.properties para el reporte de Allure.
+    """
+    # Esta es la carpeta por defecto donde Allure guarda los resultados (los archivos .json)
+    allure_dir = "allure-results" 
+    
+    # Nos aseguramos de que la carpeta exista antes de intentar crear el archivo
+    if not os.path.exists(allure_dir):
+        os.makedirs(allure_dir)
+        
+    env_file = os.path.join(allure_dir, "environment.properties")
+    
+    # Escribimos las variables que queremos que aparezcan en el panel "Environment"
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.write("Navegador=Chrome (Headless)\n")
+        f.write("Entorno=QA\n")
+        f.write("URL_Frontend=https://qa.amv.travel/\n")
+        f.write("URL_Backoffice=https://qa.bo.amv.travel\n")
+        f.write("Sistema=Motor_Multidestinos\n")
+        f.write("Framework=Pytest+Selenium\n")
