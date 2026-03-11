@@ -9,6 +9,15 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Reservar Servicios")
 @allure.story("Búsqueda, filtrado y reserva de excursión en Bariloche")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.description("""
+Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un servicio:
+1. Login silencioso y navegación a la pestaña de Servicios.
+2. Búsqueda filtrada por Destino (Bariloche) y Tipo (Excursión).
+3. Validación de la interfaz (UI) en las cards de resultados y el detalle interno.
+4. Selección de cantidad de pasajeros.
+5. Confirmación de reserva y validación final comprobando que el carrito sume 4 ítems.
+""")
 def test_reserva_servicio_flujo_completo(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
