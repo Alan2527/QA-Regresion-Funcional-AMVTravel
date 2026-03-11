@@ -9,6 +9,15 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Reservar Hoteles")
 @allure.story("Búsqueda, filtrado y reserva de hotel en Bariloche")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.description("""
+Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un hotel:
+1. Búsqueda interactiva por destino (Bariloche) y selección en calendario.
+2. Configuración compleja de pasajeros (adultos y menores con asignación de edad).
+3. Aplicación de múltiples filtros laterales concurrentes (Zona, Tipo, Amenities).
+4. Validación visual y funcional de la card del hotel y la vista de detalle interno.
+5. Suma de habitaciones y confirmación final de la reserva validando el alert de éxito.
+""")
 def test_reserva_hotel_flujo_completo(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
