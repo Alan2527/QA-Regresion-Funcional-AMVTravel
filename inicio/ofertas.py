@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 
 @allure.feature("Ofertas / Oportunidades")
 @allure.story("Búsqueda y configuración de Oportunidad a 7 días")
@@ -12,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 @allure.description("""
 Este caso de prueba cubre la configuración de una oferta:
 1. Navegación a la pestaña de Oportunidades.
-2. Búsqueda con fecha dinámica (hoy + 7 días).
+2. Búsqueda con fecha dinámica (hoy + 7 días) y cierre del calendario.
 3. Configuración de noches, pasajeros, habitaciones y categoría mediante selectores custom.
 4. Avance de pantalla y selección de un servicio específico (checkbox 163).
 """)
@@ -38,6 +39,10 @@ def test_ofertas_flujo_completo(logged_in_driver):
             input_fecha = wait.until(EC.element_to_be_clickable((By.ID, "txtOpportunityCalendar")))
             input_fecha.clear()
             input_fecha.send_keys(fecha_oferta)
+            
+            # Cerrar el calendario superpuesto apretando ESCAPE para liberar el botón Buscar
+            input_fecha.send_keys(Keys.ESCAPE)
+            time.sleep(0.5) 
             
             # 4. Click en buscar
             wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and contains(@class, 'btnSearchOpportunity')]"))).click()
