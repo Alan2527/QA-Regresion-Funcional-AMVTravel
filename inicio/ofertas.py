@@ -5,80 +5,91 @@ from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
-@allure.feature("Ofertas / Oportunidades")
-@allure.story("Búsqueda y configuración de Oportunidad a 7 días")
+@allure.feature("Ofertas")
+@allure.story("Nuevo flujo E2E: Búsqueda de Oferta a 7 días y validación de UI")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba cubre la configuración de una oferta:
-1. Navegación a la pestaña de Oportunidades.
-2. Búsqueda con fecha dinámica (hoy + 7 días) y cierre del calendario.
-3. Configuración de noches, pasajeros, habitaciones y categoría mediante selectores custom.
-4. Avance de pantalla y selección de un servicio específico (checkbox 163).
+Este caso de prueba cubre el nuevo flujo de ofertas:
+1. Login silencioso (vía fixture).
+2. Selección de la pestaña Ofertas (href='#tabOpportunity').
+3. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
+4. Uso de los selectores custom (TomSelect) para parámetros de viaje y habitación.
+5. Validación de la carga de imágenes por defecto y estructura HTML (h6).
+6. Avance a la pantalla final y validación de la tabla de resumen.
 """)
-def test_ofertas_flujo_completo(logged_in_driver):
-    # Inyectamos el driver que ya viene con el login resuelto desde conftest.py
+def test_ofertas_nuevo_flujo(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
+    actions = ActionChains(driver)
 
-    # Helper interno para manejar los selectores custom de la UI
-    def seleccionar_dropdown(xpath_div, valor):
-        wait.until(EC.element_to_be_clickable((By.XPATH, xpath_div))).click()
-        time.sleep(0.5) # Pausa breve para que la animación del combo despliegue las opciones
-        xpath_opcion = f"//li[text()='{valor}'] | //div[contains(@class, 'option') and text()='{valor}'] | //a[text()='{valor}']"
-        wait.until(EC.element_to_be_clickable((By.XPATH, xpath_opcion))).click()
+    def seleccionar_en_tomselect(parent_class, valor):
+        """Helper para interactuar con los selectores custom de la UI"""
+        # 1. Clickeamos en el div.ts-control que está dentro del contenedor padre
+        control = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f".{parent_class} .ts-control")))
+        control.click()
+        time.sleep(0.5) # Espera a que se desplieguen las opciones
+        
+        # 2. Clickeamos en la opción que contiene el número deseado
+        opcion = wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[contains(@class, 'ts-dropdown')]//div[contains(@class, 'option') and text()='{valor}']")))
+        opcion.click()
 
     try:
-        with allure.step("1. Navegar a Oportunidades y buscar por fecha dinámica"):
-            # 2. Click en la pestaña Oportunidad
-            wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctl00_lblOpportunity"))).click()
+        with allure.step("1 a 5. Navegar, ingresar fecha y buscar"):
+            # 2. Click en la pestaña con href="#tabOpportunity"
+            wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='#tabOpportunity']"))).click()
             
-            # 3. Calcular fecha (hoy + 7 días) y tipear
+            # 3. Calcular fecha y escribirla
             fecha_oferta = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%Y")
             input_fecha = wait.until(EC.element_to_be_clickable((By.ID, "txtOpportunityCalendar")))
             input_fecha.clear()
             input_fecha.send_keys(fecha_oferta)
             
-            # Cerrar el calendario superpuesto apretando ESCAPE para liberar el botón Buscar
-            input_fecha.send_keys(Keys.ESCAPE)
-            time.sleep(0.5) 
+            # 4. Click fuera del input para cerrar el calendario (en el body, coordenada 0,0 para evitar clickear otro botón)
+            body = driver.find_element(By.TAG_NAME, "body")
+            actions.move_to_element_with_offset(body, 0, 0).click().perform()
+            time.sleep(0.5)
             
-            # 4. Click en buscar
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and contains(@class, 'btnSearchOpportunity')]"))).click()
+            # 5. Click en el botón de búsqueda
+            wait.until(EC.element_to_be_clickable((By.NAME, "ctl00$cphMainSlider$ctl00$ctrlOpportunitySearchControl$btnSearch"))).click()
 
-        with allure.step("2. Configurar Destino (Noches, Pasajeros, Habitaciones y Categoría)"):
-            # 5 y 6. Click en div destino/noches y seleccionar 8
-            seleccionar_dropdown("//*[@id='updCustomTourDestination']/div[1]/div[1]/div[2]/div[1]/div[2]/div", "8")
+        with allure.step("6 a 9. Seleccionar parámetros de viaje (4) y tipo de habitación (2)"):
+            # 6 y 7. Elegir el numero 4 en el selector de container-travel-paremeters
+            seleccionar_en_tomselect("container-travel-paremeters", "4")
             
-            # 7 y 8. Click en div pasajeros y seleccionar 1
-            seleccionar_dropdown("//*[@id='updCustomTourDestination']/div[1]/div[2]/div[2]/div[3]/div/div[1]", "1")
-            
-            # 9 y 10. Click en div habitaciones y seleccionar 1
-            seleccionar_dropdown("//*[@id='updCustomTourDestination']/div[1]/div[2]/div[2]/div[2]/div/div[1]", "1")
-            
-            # 11 y 12. Click en div categoría y seleccionar 3
-            seleccionar_dropdown("//*[@id='updCustomTourDestination']/div[1]/div[2]/div[2]/div[1]/div/div[1]", "3")
+            # 8 y 9. Seleccionar el numero 2 en el selector de container-type-room-paremeter
+            seleccionar_en_tomselect("container-type-room-paremeter", "2")
 
-        with allure.step("3. Avanzar y agregar servicio adicional"):
-            # 13. Siguiente
+        with allure.step("10 y 11. Avanzar y validar contenido del acordeón (Imagen y H6)"):
+            # 10. Click en Siguiente
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # 14. Click en Añadir Servicio
-            wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lvDestinations_ctrl0_lnkAddService"))).click()
+            # 11. Validar existencia del div y h6 dentro del accordion-content
+            acordeon = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "accordion-content")))
             
-            # 15. Marcar checkbox con data-id="163" si no está marcado
-            checkbox = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @data-id='163']")))
-            if not checkbox.is_selected():
-                checkbox.click()
+            # Validar la imagen. Usamos 'contains' porque el navegador a veces formatea el string del style de forma distinta
+            img_divs = acordeon.find_elements(By.XPATH, ".//div[contains(@style, 'no_image_86_0.png')]")
+            assert len(img_divs) > 0, "Validación fallida: No se encontró el div con la imagen 'no_image_86_0.png' en el acordeón."
             
-            # 16. Click en el modal para agregar el servicio
-            wait.until(EC.element_to_be_clickable((By.ID, "lnkAddServiceModal"))).click()
+            # Validar el h6
+            h6_elements = acordeon.find_elements(By.CSS_SELECTOR, "h6.h6style")
+            assert len(h6_elements) > 0, "Validación fallida: No se encontró ningún elemento <h6> con la clase 'h6style' en el acordeón."
+
+        with allure.step("12 y 13. Avanzar y validar la existencia de la tabla final"):
+            # 12. Click en Siguiente nuevamente
+            wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # Captura de éxito para el reporte de Allure
-            allure.attach(driver.get_screenshot_as_png(), name="Oferta_Configurada_Exitosamente", attachment_type=allure.attachment_type.PNG)
+            # 13. Validar que exista una tabla con las clases específicas
+            wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")),
+                message="Validación fallida: No se encontró la tabla con class='table table-bordered table-striped' en la última vista."
+            )
+
+            # Captura de éxito al completar todas las validaciones
+            allure.attach(driver.get_screenshot_as_png(), name="Flujo_Validado_Exitosamente", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
-        # Captura de error para el reporte de Allure
-        allure.attach(driver.get_screenshot_as_png(), name="Fallo_en_Ofertas", attachment_type=allure.attachment_type.PNG)
-        pytest.fail(f"El test falló durante la ejecución de los pasos: {e}")
+        # Captura de error en caso de fallo en cualquier validación o interacción
+        allure.attach(driver.get_screenshot_as_png(), name="Fallo_en_Nuevo_Flujo_Ofertas", attachment_type=allure.attachment_type.PNG)
+        pytest.fail(f"El test falló durante la ejecución: {str(e)}")
