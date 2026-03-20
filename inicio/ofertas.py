@@ -62,8 +62,8 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
             # Parámetros de viaje
             seleccionar_en_tomselect("container-travel-paremeters", "4")
             
-            # Tipo de habitación (ahora sí, buscando el "2" literal dentro de su contenedor)
-            seleccionar_en_tomselect("container-type-room-paremeter", "2")
+            # Tipo de habitación
+            seleccionar_en_tomselect("container-type-room-paremeter", "4")
             
             # CAPTURA PASO 2
             allure.attach(driver.get_screenshot_as_png(), name="2_Parametros_Seleccionados", attachment_type=allure.attachment_type.PNG)
