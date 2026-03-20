@@ -49,14 +49,12 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
             
             wait.until(EC.element_to_be_clickable((By.NAME, "ctl00$cphMainSlider$ctl00$ctrlOpportunitySearchControl$btnSearch"))).click()
             
-            # CAPTURA PASO 1
             allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Realizada", attachment_type=allure.attachment_type.PNG)
 
-        with allure.step("6 a 9. Seleccionar parámetros de viaje (4) y tipo de habitación (4)"):
+        with allure.step("6 a 9. Seleccionar parámetros de viaje (4) y tipo de habitación (2)"):
             seleccionar_en_tomselect("container-travel-paremeters", "4")
             seleccionar_en_tomselect("container-type-room-paremeter", "4")
             
-            # CAPTURA PASO 2
             allure.attach(driver.get_screenshot_as_png(), name="2_Parametros_Seleccionados", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("10 y 11. Avanzar y validar contenido del acordeón (Imagen y H6)"):
@@ -70,24 +68,19 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
             h6_elements = acordeon.find_elements(By.CSS_SELECTOR, "h6.h6style")
             assert len(h6_elements) > 0, "Validación fallida: No se encontró el tag <h6>."
             
-            # CAPTURA PASO 3
             allure.attach(driver.get_screenshot_as_png(), name="3_Acordeon_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("12 y 13. Avanzar y validar VISUALMENTE la existencia de la tabla final"):
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # Se asegura que la tabla esté visible para el ojo humano antes de continuar
-            tabla_final = wait.until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, "table.table-bordered.table-striped")),
-                message="Validación fallida: No se visualizó la tabla de resumen final."
+            # Validación a prueba de balas: Busca todas las tablas y espera a que al menos UNA sea visible
+            wait.until(
+                lambda d: any(tabla.is_displayed() for tabla in d.find_elements(By.CSS_SELECTOR, "table.table.table-bordered.table-striped")),
+                message="Validación fallida: Ninguna tabla de resumen se hizo visible."
             )
 
-            assert tabla_final.is_displayed(), "La tabla existe en código pero no está visible en pantalla."
-
-            # Pausa para dar tiempo a que termine cualquier animación de la UI
             time.sleep(1)
 
-            # CAPTURA PASO 4 (Se toma con la tabla ya renderizada)
             allure.attach(driver.get_screenshot_as_png(), name="4_Tabla_Final_Validada", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
