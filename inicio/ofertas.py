@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-@allure.feature("Ofertas")
+@allure.feature("Ofertas / Oportunidades")
 @allure.story("Nuevo flujo E2E: Búsqueda de Oferta a 7 días y validación de UI")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
@@ -25,71 +25,77 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
     actions = ActionChains(driver)
 
     def seleccionar_en_tomselect(parent_class, valor):
-        """Helper para interactuar con los selectores custom de la UI"""
-        # 1. Clickeamos en el div.ts-control que está dentro del contenedor padre
+        """Helper para interactuar con los selectores custom, encapsulado a su propio contenedor"""
+        # 1. Clickeamos el control para abrir el desplegable
         control = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f".{parent_class} .ts-control")))
         control.click()
-        time.sleep(0.5) # Espera a que se desplieguen las opciones
+        time.sleep(0.5) 
         
-        # 2. Clickeamos en la opción que contiene el número deseado
-        opcion = wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[contains(@class, 'ts-dropdown')]//div[contains(@class, 'option') and text()='{valor}']")))
+        # 2. Buscamos la opción ESTRICTAMENTE dentro del parent_class para evitar falsos positivos
+        xpath_opcion = f"//div[contains(@class, '{parent_class}')]//div[contains(@class, 'option') and text()='{valor}']"
+        opcion = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_opcion)))
         opcion.click()
 
     try:
         with allure.step("1 a 5. Navegar, ingresar fecha y buscar"):
-            # 2. Click en la pestaña con href="#tabOpportunity"
+            # Click pestaña
             wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='#tabOpportunity']"))).click()
             
-            # 3. Calcular fecha y escribirla
+            # Fecha dinámica
             fecha_oferta = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%Y")
             input_fecha = wait.until(EC.element_to_be_clickable((By.ID, "txtOpportunityCalendar")))
             input_fecha.clear()
             input_fecha.send_keys(fecha_oferta)
             
-            # 4. Click fuera del input para cerrar el calendario (en el body, coordenada 0,0 para evitar clickear otro botón)
+            # Clic neutro para cerrar calendario
             body = driver.find_element(By.TAG_NAME, "body")
             actions.move_to_element_with_offset(body, 0, 0).click().perform()
             time.sleep(0.5)
             
-            # 5. Click en el botón de búsqueda
+            # Botón buscar
             wait.until(EC.element_to_be_clickable((By.NAME, "ctl00$cphMainSlider$ctl00$ctrlOpportunitySearchControl$btnSearch"))).click()
+            
+            # CAPTURA PASO 1
+            allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Realizada", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("6 a 9. Seleccionar parámetros de viaje (4) y tipo de habitación (2)"):
-            # 6 y 7. Elegir el numero 4 en el selector de container-travel-paremeters
+            # Parámetros de viaje
             seleccionar_en_tomselect("container-travel-paremeters", "4")
             
-            # 8 y 9. Seleccionar el numero 2 en el selector de container-type-room-paremeter
+            # Tipo de habitación (ahora sí, buscando el "2" literal dentro de su contenedor)
             seleccionar_en_tomselect("container-type-room-paremeter", "2")
+            
+            # CAPTURA PASO 2
+            allure.attach(driver.get_screenshot_as_png(), name="2_Parametros_Seleccionados", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("10 y 11. Avanzar y validar contenido del acordeón (Imagen y H6)"):
-            # 10. Click en Siguiente
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # 11. Validar existencia del div y h6 dentro del accordion-content
             acordeon = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "accordion-content")))
             
-            # Validar la imagen. Usamos 'contains' porque el navegador a veces formatea el string del style de forma distinta
+            # Validación de la imagen default
             img_divs = acordeon.find_elements(By.XPATH, ".//div[contains(@style, 'no_image_86_0.png')]")
-            assert len(img_divs) > 0, "Validación fallida: No se encontró el div con la imagen 'no_image_86_0.png' en el acordeón."
+            assert len(img_divs) > 0, "Validación fallida: No se encontró el div con la imagen 'no_image_86_0.png'."
             
-            # Validar el h6
+            # Validación del H6
             h6_elements = acordeon.find_elements(By.CSS_SELECTOR, "h6.h6style")
-            assert len(h6_elements) > 0, "Validación fallida: No se encontró ningún elemento <h6> con la clase 'h6style' en el acordeón."
+            assert len(h6_elements) > 0, "Validación fallida: No se encontró el tag <h6> con la clase 'h6style'."
+            
+            # CAPTURA PASO 3
+            allure.attach(driver.get_screenshot_as_png(), name="3_Acordeon_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("12 y 13. Avanzar y validar la existencia de la tabla final"):
-            # 12. Click en Siguiente nuevamente
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # 13. Validar que exista una tabla con las clases específicas
             wait.until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")),
-                message="Validación fallida: No se encontró la tabla con class='table table-bordered table-striped' en la última vista."
+                message="Validación fallida: No se encontró la tabla de resumen final."
             )
 
-            # Captura de éxito al completar todas las validaciones
-            allure.attach(driver.get_screenshot_as_png(), name="Flujo_Validado_Exitosamente", attachment_type=allure.attachment_type.PNG)
+            # CAPTURA PASO 4
+            allure.attach(driver.get_screenshot_as_png(), name="4_Tabla_Final_Validada", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
-        # Captura de error en caso de fallo en cualquier validación o interacción
+        # Captura de error
         allure.attach(driver.get_screenshot_as_png(), name="Fallo_en_Nuevo_Flujo_Ofertas", attachment_type=allure.attachment_type.PNG)
         pytest.fail(f"El test falló durante la ejecución: {str(e)}")
