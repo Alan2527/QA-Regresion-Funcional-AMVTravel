@@ -11,7 +11,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.story("Nuevo flujo E2E: Búsqueda de Oferta a 7 días y validación de UI")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba cubre el nuevo flujo de ofertas:
+Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circuito (Oferta):
 1. Login silencioso y navegación a la pestaña de Ofertas.
 2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
 3. Uso de los selectores para parámetros de viaje y habitación.
