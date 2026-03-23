@@ -7,17 +7,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-@allure.feature("Ofertas / Oportunidades")
+@allure.feature("Ofertas")
 @allure.story("Nuevo flujo E2E: Búsqueda de Oferta a 7 días y validación de UI")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
 Este caso de prueba cubre el nuevo flujo de ofertas:
-1. Login silencioso (vía fixture).
-2. Selección de la pestaña Ofertas (href='#tabOpportunity').
-3. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
-4. Uso de los selectores custom (TomSelect) para parámetros de viaje y habitación.
-5. Validación de la carga de imágenes por defecto y estructura HTML (h6).
-6. Avance a la pantalla final y validación VISUAL de la tabla de resumen.
+1. Login silencioso y navegación a la pestaña de Ofertas.
+2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
+3. Uso de los selectores para parámetros de viaje y habitación.
+4. Validación de la carga de imágenes por defecto y estructura HTML.
+5. Avance a la pantalla final y validación VISUAL de la tabla de resumen.
 """)
 def test_ofertas_nuevo_flujo(logged_in_driver):
     driver = logged_in_driver
