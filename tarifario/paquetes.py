@@ -15,7 +15,7 @@ Este caso de prueba cubre el flujo de Tarifario - Paquetes:
 1. Login silencioso y navegación a la pestaña Tarifario.
 2. Búsqueda de paquetes con filtros por defecto (Argentina, Buenos Aires).
 3. Validación de estructura de resultados en pantalla.
-4. Ingreso al detalle del paquete (ID 2138) y validación del acordeón desplegable.
+4. Ingreso al detalle del paquete y validación del acordeón desplegable.
 5. Apertura del modal de Proveedores y validación de datos cargados.
 6. Descarga del paquete en formato Word y validación en el sistema de archivos (CI/CD).
 """)
@@ -29,11 +29,10 @@ def test_tarifario_paquetes(logged_in_driver):
         'downloadPath': descargas_dir
     })
 
-    # 🌟 HELPER CLAVE: Pausa el test si detecta el overlay de "Cargando..."
     def esperar_fin_de_carga():
         try:
             wait.until(EC.invisibility_of_element_located((By.XPATH, "//*[contains(translate(text(), 'CARGANDO', 'cargando'), 'cargando') or contains(@class, 'loading') or contains(@class, 'spinner')]")))
-            time.sleep(1) # Buffer extra de 1 segundo para que el DOM se dibuje bien
+            time.sleep(1) 
         except:
             pass
 
@@ -52,40 +51,37 @@ def test_tarifario_paquetes(logged_in_driver):
             btn_buscar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView")))
             btn_buscar.click()
             
-            esperar_fin_de_carga() # Espera a que carguen los resultados
+            esperar_fin_de_carga() 
             allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Tarifario", attachment_type=allure.attachment_type.PNG)
 
-        with allure.step("6 y 7. Validar resultados y entrar al detalle del paquete (ID 2138)"):
+        with allure.step("6 y 7. Validar resultados y entrar al detalle del paquete"):
             item_container = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1")))
             imagenes = item_container.find_elements(By.CSS_SELECTOR, "div.tariff-image-view")
             detalles = item_container.find_elements(By.CSS_SELECTOR, "div.tariff-detail")
             
             assert len(imagenes) > 0 and len(detalles) > 0, "Validación fallida: No se renderizó la estructura."
 
-            btn_paquete = wait.until(EC.element_to_be_clickable((By.ID, "lnk2138")))
+            # Modificación: Búsqueda del elemento por sus múltiples clases en lugar del ID
+            btn_paquete = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.accordeon-header.tariff-detail.tariff-view-table.toggle-asigned")))
             driver.execute_script("arguments[0].click();", btn_paquete)
             
-            esperar_fin_de_carga() # Espera a que cargue la vista de detalle del paquete
+            esperar_fin_de_carga() 
             allure.attach(driver.get_screenshot_as_png(), name="2_Ingreso_Detalle_Paquete", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 a 10. Validar renderizado y apertura del acordeón de tours"):
-            # Aumentamos la espera específica para este bloque a 30 segundos
             wait_long = WebDriverWait(driver, 30)
             
-            # Usamos CSS Selector apuntando directamente a las clases estáticas del elemento
             acc_header = wait_long.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-tours")))
             
-            # 🌟 SCROLL FORZADO: Movemos la pantalla hasta el elemento antes de interactuar
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", acc_header)
-            time.sleep(1) # Pausa obligatoria post-scroll
+            time.sleep(1) 
             
-            # Forzamos click por JS
             driver.execute_script("arguments[0].click();", acc_header)
             
             acc_content = wait_long.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.col-md-12.accordeon-content")))
             assert acc_content.is_displayed(), "Validación fallida: El acordeón no se desplegó."
             
-            time.sleep(1) # Pequeña pausa para capturar la animación del acordeón abierto
+            time.sleep(1) 
             allure.attach(driver.get_screenshot_as_png(), name="3_Acordeon_Abierto", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("11 a 13. Validar modal de Proveedores"):
@@ -98,7 +94,7 @@ def test_tarifario_paquetes(logged_in_driver):
             texto_encontrado = any(td.text.strip() != "" for td in tds)
             assert texto_encontrado, "Validación fallida: La tabla cargó vacía."
             
-            time.sleep(1) # Pausa para foto
+            time.sleep(1) 
             allure.attach(driver.get_screenshot_as_png(), name="4_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
             
             btn_cerrar = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.btn-close-suppliers")))
