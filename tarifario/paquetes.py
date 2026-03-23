@@ -69,11 +69,20 @@ def test_tarifario_paquetes(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Ingreso_Detalle_Paquete", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 a 10. Validar renderizado y apertura del acordeón de tours"):
-            # Corrección del selector: Busca cualquier 'a' que sea un header de acordeón y contenga la palabra 'Tours'
-            acc_header = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'accordeon-header') and contains(., 'Tours')]")))
-            driver.execute_script("arguments[0].click();", acc_header) # Forzamos click por JS para evitar bloqueos visuales
+            # Aumentamos la espera específica para este bloque a 30 segundos
+            wait_long = WebDriverWait(driver, 30)
             
-            acc_content = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.col-md-12.accordeon-content")))
+            # Usamos CSS Selector apuntando directamente a las clases estáticas del elemento
+            acc_header = wait_long.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-tours")))
+            
+            # 🌟 SCROLL FORZADO: Movemos la pantalla hasta el elemento antes de interactuar
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", acc_header)
+            time.sleep(1) # Pausa obligatoria post-scroll
+            
+            # Forzamos click por JS
+            driver.execute_script("arguments[0].click();", acc_header)
+            
+            acc_content = wait_long.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.col-md-12.accordeon-content")))
             assert acc_content.is_displayed(), "Validación fallida: El acordeón no se desplegó."
             
             time.sleep(1) # Pequeña pausa para capturar la animación del acordeón abierto
