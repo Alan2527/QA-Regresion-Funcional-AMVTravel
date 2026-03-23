@@ -14,8 +14,8 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 1. Login silencioso y navegación a la pestaña Tarifario.
 2. Cambio a la solapa Excursiones.
 3. Modificación del filtro de destino (de Buenos Aires a Bariloche).
-4. Ejecución de la búsqueda.
-5. Ingreso al detalle de una excursión específica.
+4. Ejecución de la búsqueda (Foco y Enter).
+5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
 7. Apertura y validación del modal de Proveedores.
 """)
@@ -23,27 +23,22 @@ def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
 
-    # 🌟 HELPER CLAVE: Pausa absoluta antibugs
     def esperar_fin_de_carga():
         try:
             wait.until(EC.invisibility_of_element_located((By.XPATH, "//*[contains(translate(text(), 'CARGANDO', 'cargando'), 'cargando') or contains(@class, 'loading') or contains(@class, 'spinner')]")))
         except:
             pass
-        
         try:
             wait.until(lambda d: d.execute_script("return (typeof Sys === 'undefined') || (typeof Sys.WebForms === 'undefined') || (Sys.WebForms.PageRequestManager.getInstance().get_isInAsyncPostBack() === false);"))
         except:
             pass
-            
         try:
             wait.until(lambda d: d.execute_script("return (typeof jQuery === 'undefined') || (jQuery.active === 0);"))
         except:
             pass
-            
-        time.sleep(1) # Un segundito de gracia para que el navegador dibuje todo
+        time.sleep(1) 
 
     def cambiar_destino(destino_actual, nuevo_destino):
-        """Abre el dropdown de destino buscando el texto actual, y clickea la nueva opción"""
         xpath_dropdown = f"//div[contains(@class, 'ts-control') and contains(., '{destino_actual}')]"
         dropdown = wait.until(EC.presence_of_element_located((By.XPATH, xpath_dropdown)))
         driver.execute_script("arguments[0].click();", dropdown)
@@ -67,43 +62,44 @@ def test_tarifario_excursiones(logged_in_driver):
         with allure.step("4 y 5. Cambiar destino a Bariloche y Buscar"):
             cambiar_destino("Buenos Aires", "Bariloche")
             
-            btn_buscar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView")))
-            driver.execute_script("arguments[0].click();", btn_buscar)
+            # CORRECCIÓN VITAL: Hacemos foco en el botón y apretamos ENTER físico
+            btn_buscar = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView")))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_buscar)
+            time.sleep(1)
+            btn_buscar.send_keys(Keys.ENTER)
             esperar_fin_de_carga()
             
             allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Excursiones", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("6 y 7. Ingresar al detalle de la excursión y validar tabla de tarifas"):
-            # 6. Click en el ID específico de la excursión
-            btn_excursion = wait.until(EC.presence_of_element_located((By.ID, "lnk93cfd3ea-0235-4dad-b7ed-46588015f1ff")))
+            # CORRECCIÓN VITAL: Evitamos el GUID quemado en código y clickeamos el 1er resultado dinámico
+            btn_excursion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
             btn_excursion.send_keys(Keys.ENTER)
             esperar_fin_de_carga()
             
-            # 7. Validamos que exista la tabla y contenga la clase pTariff
+            # Validamos tabla
             tabla_detalle = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded")))
             p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
             
-            assert len(p_tariffs) > 0, "Validación fallida: No se encontró ningún elemento <p> con clase 'pTariff' dentro de la tabla."
+            assert len(p_tariffs) > 0, "Validación fallida: No se encontró ningún elemento <p> con clase 'pTariff'."
             
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # 8. Click en Ver Proveedores
             btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[title='Ver Proveedores']")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
-            driver.execute_script("arguments[0].click();", btn_proveedores)
+            btn_proveedores.send_keys(Keys.ENTER) # Homologamos el click a Enter también por seguridad
             
-            # 9. Validar modal de tabla suppliers-table
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
             texto_encontrado = any(td.text.strip() != "" for td in tds)
             assert texto_encontrado, "Validación fallida: La tabla de proveedores cargó vacía."
             
-            time.sleep(1) # Pequeña pausa para asegurar buena captura
+            time.sleep(1)
             allure.attach(driver.get_screenshot_as_png(), name="3_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
