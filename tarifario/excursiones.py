@@ -62,7 +62,6 @@ def test_tarifario_excursiones(logged_in_driver):
         with allure.step("4 y 5. Cambiar destino a Bariloche y Buscar"):
             cambiar_destino("Buenos Aires", "Bariloche")
             
-            # CORRECCIÓN VITAL: Hacemos foco en el botón y apretamos ENTER físico
             btn_buscar = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_buscar)
             time.sleep(1)
@@ -72,14 +71,12 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Excursiones", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("6 y 7. Ingresar al detalle de la excursión y validar tabla de tarifas"):
-            # CORRECCIÓN VITAL: Evitamos el GUID quemado en código y clickeamos el 1er resultado dinámico
             btn_excursion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
             btn_excursion.send_keys(Keys.ENTER)
             esperar_fin_de_carga()
             
-            # Validamos tabla
             tabla_detalle = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded")))
             p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
             
@@ -88,12 +85,14 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # CORRECCIÓN VITAL: Apuntamos al <a> que envuelve al <button> para forzar el __doPostBack
-            btn_proveedores_link = wait.until(EC.presence_of_element_located((By.XPATH, "//a[@title='Ver Proveedores']")))
+            # CORRECCIÓN DEFINITIVA: Usamos un selector CSS que busca cualquier enlace cuyo ID contenga 'lnkSuppliers'
+            btn_proveedores_link = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[id*='lnkSuppliers']")))
+            
+            # Scrolleamos hacia el enlace
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores_link)
             time.sleep(1)
             
-            # Ejecutamos el click directamente sobre el <a> vía Javascript
+            # Ejecutamos el click directamente sobre el <a> vía Javascript para forzar el __doPostBack
             driver.execute_script("arguments[0].click();", btn_proveedores_link)
             
             # Esperamos que cargue la tabla del modal
