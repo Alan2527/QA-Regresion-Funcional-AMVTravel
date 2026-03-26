@@ -89,7 +89,7 @@ def test_tarifario_excursiones(logged_in_driver):
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
             # CORRECCIÓN VITAL: Apuntamos al <a> que envuelve al <button> para forzar el __doPostBack
-            btn_proveedores_link = wait.until(EC.presence_of_element_located((By.XPATH, "//a[.//button[@title='Ver Proveedores']]")))
+            btn_proveedores_link = wait.until(EC.presence_of_element_located((By.XPATH, "//a[.//i[@title='Ver Proveedores']]")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores_link)
             time.sleep(1)
             
