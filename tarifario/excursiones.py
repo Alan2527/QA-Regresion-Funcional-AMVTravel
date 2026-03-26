@@ -17,7 +17,7 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 4. Ejecución de la búsqueda (Foco y Enter).
 5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores.
+7. Apertura y validación del modal de Proveedores usando inyección directa de JS.
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
@@ -85,17 +85,24 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # CORRECCIÓN DEFINITIVA: Usamos un selector CSS que busca cualquier enlace cuyo ID contenga 'lnkSuppliers'
-            btn_proveedores_link = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[id*='lnkSuppliers']")))
-            
-            # Scrolleamos hacia el enlace
+            # 1. Encontramos el enlace exacto basándonos en su ID
+            btn_proveedores_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[id*='lnkSuppliers']")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores_link)
             time.sleep(1)
             
-            # Ejecutamos el click directamente sobre el <a> vía Javascript para forzar el __doPostBack
-            driver.execute_script("arguments[0].click();", btn_proveedores_link)
+            # 2. LA OPCIÓN NUCLEAR: Extraemos el evento __doPostBack directo del href
+            href_attr = btn_proveedores_link.get_attribute("href")
             
-            # Esperamos que cargue la tabla del modal
+            if href_attr and "javascript:" in href_attr:
+                # Limpiamos el string para dejar solo la función JS y la ejecutamos
+                js_code = href_attr.replace("javascript:", "")
+                driver.execute_script(js_code)
+            else:
+                # Plan B estricto si por algún motivo no tiene el javascript en el href
+                driver.execute_script("arguments[0].click();", btn_proveedores_link)
+            
+            # 3. Esperamos que el servidor responda y muestre el modal
+            esperar_fin_de_carga() # Agregamos tu función de espera por si levanta el loader
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
