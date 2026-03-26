@@ -88,11 +88,15 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[title='Ver Proveedores']")))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
+            # CORRECCIÓN VITAL: Apuntamos al <a> que envuelve al <button> para forzar el __doPostBack
+            btn_proveedores_link = wait.until(EC.presence_of_element_located((By.XPATH, "//a[.//button[@title='Ver Proveedores']]")))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores_link)
             time.sleep(1)
-            btn_proveedores.send_keys(Keys.ENTER) # Homologamos el click a Enter también por seguridad
             
+            # Ejecutamos el click directamente sobre el <a> vía Javascript
+            driver.execute_script("arguments[0].click();", btn_proveedores_link)
+            
+            # Esperamos que cargue la tabla del modal
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
