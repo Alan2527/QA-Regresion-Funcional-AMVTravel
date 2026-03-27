@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains  # IMPORTANTE: Agregamos esto
 
 @allure.feature("Tarifario")
 @allure.story("Consulta de Excursiones")
@@ -17,11 +18,12 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 4. Ejecución de la búsqueda (Foco y Enter).
 5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores.
+7. Apertura y validación del modal de Proveedores (Simulación de TAB + ENTER).
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
+    actions = ActionChains(driver) # Inicializamos el emulador de teclado y mouse
 
     def esperar_fin_de_carga():
         try:
@@ -71,7 +73,6 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Excursiones", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("6 y 7. Ingresar al detalle de la excursión y validar tabla de tarifas"):
-            # Esta es la técnica que te funcionó: Scroll + Keys.ENTER
             btn_excursion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
@@ -86,18 +87,20 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # APLICAMOS TU TÉCNICA: Buscamos por la clase exacta que vimos en el DOM
+            # 1. Encontramos el botón usando la clase
             btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.btn-open-modal")))
-            
-            # Scrolleamos igual que arriba
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
             
-            # Le mandamos el ENTER físico, que es lo que WebForms está esperando
-            btn_proveedores.send_keys(Keys.ENTER)
-            esperar_fin_de_carga()
+            # 2. LA TÉCNICA DEL TAB: Le damos foco nativo mediante JS (igual que llegar con la tecla TAB)
+            driver.execute_script("arguments[0].focus();", btn_proveedores)
+            time.sleep(0.5)
             
-            # Esperamos que cargue la tabla del modal
+            # 3. Disparamos el ENTER físico directo a la ventana del navegador
+            actions.send_keys(Keys.ENTER).perform()
+            
+            # 4. Esperamos y validamos
+            esperar_fin_de_carga()
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
