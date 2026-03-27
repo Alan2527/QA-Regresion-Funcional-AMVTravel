@@ -27,7 +27,7 @@ jobs:
           AMV_PASS: ${{ secrets.AMV_PASS }}
 
         run: |
-          tarifario/excursiones.py --alluredir=allure-results || true
+         pytest tarifario/excursiones.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
