@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains  # IMPORTANTE: Agregamos esto
+from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
 @allure.story("Consulta de Excursiones")
@@ -18,12 +18,12 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 4. Ejecución de la búsqueda (Foco y Enter).
 5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores (Simulación de TAB + ENTER).
+7. Apertura y validación del modal de Proveedores (Click por XPath absoluto).
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
-    actions = ActionChains(driver) # Inicializamos el emulador de teclado y mouse
+    actions = ActionChains(driver)
 
     def esperar_fin_de_carga():
         try:
@@ -87,19 +87,18 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # 1. Encontramos el botón usando la clase
-            btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.btn-open-modal")))
+            # Usamos el XPath exacto proporcionado
+            xpath_btn = "//*[@id='tours-container']/div/div/div/div[1]/div[1]/div[3]/button[2]"
+            btn_proveedores = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_btn)))
+            
+            # Scrolleamos hacia el botón para asegurar que sea interactuable
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
             
-            # 2. LA TÉCNICA DEL TAB: Le damos foco nativo mediante JS (igual que llegar con la tecla TAB)
-            driver.execute_script("arguments[0].focus();", btn_proveedores)
-            time.sleep(0.5)
+            # Intentamos el click nativo
+            btn_proveedores.click()
             
-            # 3. Disparamos el ENTER físico directo a la ventana del navegador
-            actions.send_keys(Keys.ENTER).perform()
-            
-            # 4. Esperamos y validamos
+            # Esperamos que cargue la tabla del modal
             esperar_fin_de_carga()
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
