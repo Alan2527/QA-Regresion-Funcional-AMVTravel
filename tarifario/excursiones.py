@@ -88,7 +88,7 @@ def test_tarifario_excursiones(logged_in_driver):
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
             # Usamos el XPath exacto proporcionado
-            xpath_btn = "//*[@id='tours-container']/div/div/div/div[1]/div[1]/div[3]/button[2]"
+            xpath_btn = "//*[@id="tours-container"]/div/div/div/div[1]/div[1]/div[3]/button[2]/i"
             btn_proveedores = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_btn)))
             
             # Scrolleamos hacia el botón para asegurar que sea interactuable
