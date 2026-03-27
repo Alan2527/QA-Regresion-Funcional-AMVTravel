@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
 @allure.story("Consulta de Excursiones")
@@ -18,12 +17,11 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 4. Ejecución de la búsqueda (Foco y Enter).
 5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores (Click por XPath absoluto).
+7. Apertura y validación del modal de Proveedores (Click en botón nativo de Bootstrap).
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
-    actions = ActionChains(driver)
 
     def esperar_fin_de_carga():
         try:
@@ -87,19 +85,20 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # Usamos el XPath exacto proporcionado
-            xpath_btn = "//*[@id='tours-container']/div/div/div/div[1]/div[1]/div[3]/button[2]/i"
-            btn_proveedores = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_btn)))
+            # Localizador infalible usando el atributo nativo de Bootstrap
+            btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-target='#suppliersModal']")))
             
-            # Scrolleamos hacia el botón para asegurar que sea interactuable
+            # Scrolleamos hacia el botón
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
             
-            # Intentamos el click nativo
-            btn_proveedores.click()
+            # Usamos Javascript click que es inmune a animaciones o superposiciones
+            driver.execute_script("arguments[0].click();", btn_proveedores)
             
-            # Esperamos que cargue la tabla del modal
-            esperar_fin_de_carga()
+            # Esperamos que el contenedor del modal de Bootstrap se vuelva visible
+            wait.until(EC.visibility_of_element_located((By.ID, "suppliersModal")))
+            
+            # Validamos la tabla que está adentro
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
