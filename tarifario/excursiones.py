@@ -92,9 +92,10 @@ def test_tarifario_excursiones(logged_in_driver):
             time.sleep(1)
             
             # Extraemos la función JavaScript exacta que tiene el botón y la ejecutamos
-            wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@onclick, 'openSuppliersModal')]")))
+        from selenium.webdriver.common.action_chains import ActionChains
 
-            driver.execute_script("arguments[0].click();", btn_proveedores)
+            actions = ActionChains(driver)
+            actions.move_to_element(btn_proveedores).pause(1).click().perform()
             
             # Esperamos la respuesta del modal
             esperar_fin_de_carga()
