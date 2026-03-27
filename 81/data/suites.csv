@@ -1,0 +1,11 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo de Tarifario - Excursiones:
+1. Login silencioso y navegación a la pestaña Tarifario.
+2. Cambio a la solapa Excursiones.
+3. Modificación del filtro de destino (de Buenos Aires a Bariloche).
+4. Ejecución de la búsqueda.
+5. Ingreso al detalle de la primera excursión encontrada.
+6. Validación de la tabla de tarifas.
+7. Apertura y validación del modal de Proveedores.
+","42653","test_tarifario_excursiones","tarifario","Fri Mar 27 13:51:17 UTC 2026","failed","Fri Mar 27 13:51:59 UTC 2026","","excursiones","",""
