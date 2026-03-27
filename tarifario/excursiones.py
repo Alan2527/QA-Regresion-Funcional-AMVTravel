@@ -17,7 +17,7 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 4. Ejecución de la búsqueda (Foco y Enter).
 5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores (Click en botón nativo de Bootstrap).
+7. Apertura y validación del modal de Proveedores (Ejecución de script nativo).
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
@@ -85,20 +85,21 @@ def test_tarifario_excursiones(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Detalle_Excursion_Validado", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # Localizador infalible usando el atributo nativo de Bootstrap
-            btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-target='#suppliersModal']")))
+            # Localizador a prueba de balas: busca cualquier botón que ejecute la función openSuppliersModal
+            btn_proveedores = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@onclick, 'openSuppliersModal')]")))
             
-            # Scrolleamos hacia el botón
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
             
-            # Usamos Javascript click que es inmune a animaciones o superposiciones
-            driver.execute_script("arguments[0].click();", btn_proveedores)
+            # Extraemos la función JavaScript exacta que tiene el botón y la ejecutamos
+            onclick_script = btn_proveedores.get_attribute("onclick")
+            if onclick_script:
+                driver.execute_script(onclick_script)
+            else:
+                driver.execute_script("arguments[0].click();", btn_proveedores)
             
-            # Esperamos que el contenedor del modal de Bootstrap se vuelva visible
-            wait.until(EC.visibility_of_element_located((By.ID, "suppliersModal")))
-            
-            # Validamos la tabla que está adentro
+            # Esperamos la respuesta del modal
+            esperar_fin_de_carga()
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
             tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
             
