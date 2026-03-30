@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
 @allure.story("Consulta de Excursiones")
@@ -14,11 +13,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 1. Login silencioso y navegación a la pestaña Tarifario.
 2. Cambio a la solapa Excursiones.
-3. Modificación del filtro de destino (de Buenos Aires a Bariloche).
-4. Ejecución de la búsqueda (Foco y Enter).
-5. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
-6. Validación de la tabla de tarifas.
-7. Apertura y validación del modal de Proveedores.
+3. Ejecución de la búsqueda con filtros por defecto (Sin cambiar ciudad para evitar bug del sistema).
+4. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
+5. Validación de la tabla de tarifas.
+6. Apertura y validación del modal de Proveedores.
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
@@ -48,23 +46,11 @@ def test_tarifario_excursiones(logged_in_driver):
             pass
         time.sleep(1)
 
-    def cambiar_destino(destino_actual, nuevo_destino):
-        xpath_dropdown = f"//div[contains(@class, 'ts-control') and contains(., '{destino_actual}')]"
-        dropdown = wait.until(EC.presence_of_element_located((By.XPATH, xpath_dropdown)))
-        driver.execute_script("arguments[0].click();", dropdown)
-        time.sleep(1)
-
-        xpath_opcion = f"//div[contains(@class, 'option') and contains(text(), '{nuevo_destino}')]"
-        opcion = wait.until(EC.presence_of_element_located((By.XPATH, xpath_opcion)))
-        driver.execute_script("arguments[0].click();", opcion)
-
-        esperar_fin_de_carga()
-
     try:
         # =========================
         # Navegación
         # =========================
-        with allure.step("1 a 3. Navegar a Tarifario y solapa Excursiones"):
+        with allure.step("1 a 2. Navegar a Tarifario y solapa Excursiones"):
             btn_tarifario = wait.until(EC.element_to_be_clickable((
                 By.CSS_SELECTOR, "a[href*='defaulttariff.aspx']"
             )))
@@ -76,11 +62,9 @@ def test_tarifario_excursiones(logged_in_driver):
             esperar_fin_de_carga()
 
         # =========================
-        # Filtro y búsqueda
+        # Filtro y búsqueda (SIN TOCAR DESTINO)
         # =========================
-        with allure.step("4 y 5. Cambiar destino a Bariloche y Buscar"):
-            cambiar_destino("Buenos Aires", "Bariloche")
-
+        with allure.step("3. Ejecutar búsqueda con destino por defecto"):
             btn_buscar = wait.until(EC.presence_of_element_located((
                 By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView"
             )))
@@ -99,7 +83,7 @@ def test_tarifario_excursiones(logged_in_driver):
         # =========================
         # Detalle excursión
         # =========================
-        with allure.step("6 y 7. Ingresar al detalle de la excursión y validar tabla de tarifas"):
+        with allure.step("4 y 5. Ingresar al detalle de la excursión y validar tabla de tarifas"):
             btn_excursion = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "div.item1 a[id^='lnk']"
             )))
@@ -123,29 +107,21 @@ def test_tarifario_excursiones(logged_in_driver):
             )
 
         # =========================
-        # Modal proveedores (FIX DEFINITIVO)
+        # Modal proveedores
         # =========================
-        with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-            # 1. Buscamos que sea CLICKABLE, no solo que exista en el DOM
+        with allure.step("6 y 7. Abrir modal de Proveedores y validar datos"):
             btn_proveedores = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')]"
             )))
 
-            # 2. Lo centramos en pantalla para evitar que un header/footer lo tape
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
 
-            # 🔥 TÁCTICA "FUEGO A DISCRECIÓN": Ejecutamos los 3 métodos seguidos sin bloqueos
-            
-            # Método A: Foco nativo (Simula que llegaste con la tecla TAB)
+            # Usamos el focus y click seguros
             driver.execute_script("arguments[0].focus();", btn_proveedores)
             time.sleep(0.5)
-            
-            # Método B: Click forzado por Javascript (Inmune a divs invisibles que tapen el botón)
             driver.execute_script("arguments[0].click();", btn_proveedores)
             time.sleep(0.5)
-            
-            # Método C: Manda la tecla ENTER físicamente al botón enfocado
             btn_proveedores.send_keys(Keys.ENTER)
 
             esperar_fin_de_carga()
