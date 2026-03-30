@@ -16,7 +16,7 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 2. Cambio a la solapa Excursiones.
 3. Ejecución de la búsqueda con filtros por defecto.
 4. Apertura y validación del modal de Proveedores desde la vista de listado.
-5. Ingreso al detalle de la primera excursión encontrada.
+5. Cierre de modal y navegación al detalle de la excursión.
 6. Validación de la tabla de tarifas.
 """)
 def test_tarifario_excursiones(logged_in_driver):
@@ -83,10 +83,9 @@ def test_tarifario_excursiones(logged_in_driver):
             )
 
         # =========================
-        # NUEVO ORDEN: Modal proveedores desde el listado
+        # Modal proveedores desde el listado
         # =========================
         with allure.step("4. Abrir modal de Proveedores desde el listado y validar"):
-            # Buscamos el primer botón de proveedores que aparezca en la lista
             btn_proveedores = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
             )))
@@ -94,33 +93,36 @@ def test_tarifario_excursiones(logged_in_driver):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
 
-            # Clickeamos con JS para evitar intercepciones
+            # UN SOLO CLICK LIMPIO para no encender y apagar el modal por error
             driver.execute_script("arguments[0].click();", btn_proveedores)
             
-            # Esperamos que la animación del modal termine
+            # Esperamos que el contenedor del modal en sí aparezca (cualquiera sea su ID o clase de Bootstrap)
+            modal = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
+            )))
+            
+            # Esperamos 3 segundos a que el Ajax termine de rellenar el modal
             time.sleep(3)
 
-            # Validamos la tabla
-            tabla_proveedores = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.suppliers-table"
-            )))
-            tds = tabla_proveedores.find_elements(By.CSS_SELECTOR, "td")
+            # Buscamos de forma genérica CUALQUIER tabla dentro de ese modal
+            tds = modal.find_elements(By.TAG_NAME, "td")
             texto_encontrado = any(td.text.strip() != "" for td in tds)
 
-            assert texto_encontrado, "Validación fallida: La tabla de proveedores cargó vacía."
+            assert texto_encontrado, "Validación fallida: La tabla de proveedores en el modal cargó vacía o no se encontró."
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="2_Modal_Proveedores_Listado",
+                name="2_Modal_Proveedores_Abierto",
                 attachment_type=allure.attachment_type.PNG
             )
 
-            # CERRAR EL MODAL presionando ESCAPE para poder continuar interactuando con la página
+            # CERRAR EL MODAL con la tecla ESCAPE y esperar a que desaparezca
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
+            esperar_fin_de_carga()
 
         # =========================
-        # Detalle excursión (Se ejecuta después de cerrar el modal)
+        # Detalle excursión
         # =========================
         with allure.step("5 y 6. Ingresar al detalle de la excursión y validar tabla de tarifas"):
             btn_excursion = wait.until(EC.presence_of_element_located((
@@ -128,7 +130,9 @@ def test_tarifario_excursiones(logged_in_driver):
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
-            btn_excursion.send_keys(Keys.ENTER)
+            
+            # Navegamos al detalle de la excursión
+            driver.execute_script("arguments[0].click();", btn_excursion)
 
             esperar_fin_de_carga()
 
