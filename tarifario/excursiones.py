@@ -16,7 +16,7 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 3. Ejecución de la búsqueda con filtros por defecto (Sin cambiar ciudad para evitar bug del sistema).
 4. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
 5. Validación de la tabla de tarifas.
-6. Apertura y validación del modal de Proveedores.
+6. Apertura y validación del modal de Proveedores (con espera explícita para renderizado de Bootstrap).
 """)
 def test_tarifario_excursiones(logged_in_driver):
     driver = logged_in_driver
@@ -110,27 +110,38 @@ def test_tarifario_excursiones(logged_in_driver):
         # Modal proveedores
         # =========================
         with allure.step("6 y 7. Abrir modal de Proveedores y validar datos"):
+            # 1. Localizar el botón de forma robusta
             btn_proveedores = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')]"
             )))
 
+            # 2. Scrollear para asegurar visibilidad
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
 
-            # Usamos el focus y click seguros
+            # 3. Táctica "Fuego a discreción" para forzar el click
             driver.execute_script("arguments[0].focus();", btn_proveedores)
             time.sleep(0.5)
             driver.execute_script("arguments[0].click();", btn_proveedores)
             time.sleep(0.5)
             btn_proveedores.send_keys(Keys.ENTER)
 
+            # =========================================================
+            # ESPERA ESTRATÉGICA: 5 segundos para que Bootstrap anime
+            # el modal y el Ajax traiga la información de los proveedores
+            # =========================================================
+            time.sleep(5)
+            
+            # Limpiamos cualquier estado de carga residual
             esperar_fin_de_carga()
 
-            wait.until(EC.visibility_of_element_located((
+            # 4. Validar que la tabla del modal se haya vuelto visible
+            tabla_proveedores = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.suppliers-table"
             )))
 
-            tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
+            # 5. Validar que tenga contenido
+            tds = tabla_proveedores.find_elements(By.CSS_SELECTOR, "td")
             texto_encontrado = any(td.text.strip() != "" for td in tds)
 
             assert texto_encontrado, "Validación fallida: La tabla de proveedores cargó vacía."
