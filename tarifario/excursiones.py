@@ -130,7 +130,7 @@ def test_tarifario_excursiones(logged_in_driver):
             # ESPERA ESTRATÉGICA: 5 segundos para que Bootstrap anime
             # el modal y el Ajax traiga la información de los proveedores
             # =========================================================
-            time.sleep(5)
+            time.sleep(20)
             
             # Limpiamos cualquier estado de carga residual
             esperar_fin_de_carga()
