@@ -1,0 +1,10 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo de Tarifario - Excursiones:
+1. Login silencioso y navegación a la pestaña Tarifario.
+2. Cambio a la solapa Excursiones.
+3. Ejecución de la búsqueda con filtros por defecto (Sin cambiar ciudad para evitar bug del sistema).
+4. Ingreso al detalle de la primera excursión encontrada (ID dinámico).
+5. Validación de la tabla de tarifas.
+6. Apertura y validación del modal de Proveedores.
+","41340","test_tarifario_excursiones","tarifario","Mon Mar 30 12:55:47 UTC 2026","failed","Mon Mar 30 12:56:29 UTC 2026","","excursiones","",""
