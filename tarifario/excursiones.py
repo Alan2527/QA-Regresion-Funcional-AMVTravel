@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-
+from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
 @allure.story("Consulta de Excursiones")
@@ -21,7 +21,6 @@ Este caso de prueba cubre el flujo de Tarifario - Excursiones:
 7. Apertura y validación del modal de Proveedores.
 """)
 def test_tarifario_excursiones(logged_in_driver):
-
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
 
@@ -124,26 +123,30 @@ def test_tarifario_excursiones(logged_in_driver):
             )
 
         # =========================
-        # Modal proveedores (FIX)
+        # Modal proveedores (FIX DEFINITIVO)
         # =========================
         with allure.step("8 y 9. Abrir modal de Proveedores y validar datos"):
-
-            btn_proveedores = wait.until(EC.presence_of_element_located((
-                By.XPATH, "//button[contains(@onclick, 'openSuppliersModal')]"
+            # 1. Buscamos que sea CLICKABLE, no solo que exista en el DOM
+            btn_proveedores = wait.until(EC.element_to_be_clickable((
+                By.XPATH, "//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')]"
             )))
 
+            # 2. Lo centramos en pantalla para evitar que un header/footer lo tape
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
             time.sleep(1)
 
-            # 🔥 FIX REAL (sin romper tu lógica)
-            try:
-                btn_proveedores.click()
-            except:
-                try:
-                    driver.execute_script("arguments[0].click();", btn_proveedores)
-                except:
-                    from selenium.webdriver.common.action_chains import ActionChains
-                    ActionChains(driver).move_to_element(btn_proveedores).pause(1).click().perform()
+            # 🔥 TÁCTICA "FUEGO A DISCRECIÓN": Ejecutamos los 3 métodos seguidos sin bloqueos
+            
+            # Método A: Foco nativo (Simula que llegaste con la tecla TAB)
+            driver.execute_script("arguments[0].focus();", btn_proveedores)
+            time.sleep(0.5)
+            
+            # Método B: Click forzado por Javascript (Inmune a divs invisibles que tapen el botón)
+            driver.execute_script("arguments[0].click();", btn_proveedores)
+            time.sleep(0.5)
+            
+            # Método C: Manda la tecla ENTER físicamente al botón enfocado
+            btn_proveedores.send_keys(Keys.ENTER)
 
             esperar_fin_de_carga()
 
