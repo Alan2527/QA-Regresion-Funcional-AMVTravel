@@ -8,18 +8,20 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Excursiones")
-@allure.severity(allure.severity_level.NORMAL)
+@allure.story("Consulta de Excursiones Completa (Tooltips, Modales y Tarifas)")
+@allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba cubre el flujo de Tarifario - Excursiones:
-1. Login silencioso y navegación a la pestaña Tarifario.
-2. Cambio a la solapa Excursiones.
-3. Ejecución de la búsqueda con filtros por defecto.
-4. Apertura y validación del modal de Proveedores desde la vista de listado.
-5. Cierre de modal y navegación al detalle de la excursión.
-6. Validación de la tabla de tarifas.
+Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
+1. Login y navegación a Excursiones.
+2. Búsqueda con destino Cachi.
+3. Validación de Tooltip de Duración.
+4. Validación de Tooltip de Idiomas.
+5. Validación de Tooltip de Operatividad.
+6. Validación del modal "Ver Proveedores" desde el listado.
+7. Validación del modal "Ver Detalle".
+8. Ingreso al detalle de la excursión y validación de la tabla de tarifas.
 """)
-def test_tarifario_excursiones(logged_in_driver):
+def test_tarifario_excursiones_completo(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
     actions = ActionChains(driver)
@@ -48,6 +50,18 @@ def test_tarifario_excursiones(logged_in_driver):
             pass
         time.sleep(1)
 
+    def cambiar_destino(destino_actual, nuevo_destino):
+        xpath_dropdown = f"//div[contains(@class, 'ts-control') and contains(., '{destino_actual}')]"
+        dropdown = wait.until(EC.presence_of_element_located((By.XPATH, xpath_dropdown)))
+        driver.execute_script("arguments[0].click();", dropdown)
+        time.sleep(1)
+
+        xpath_opcion = f"//div[contains(@class, 'option') and contains(text(), '{nuevo_destino}')]"
+        opcion = wait.until(EC.presence_of_element_located((By.XPATH, xpath_opcion)))
+        driver.execute_script("arguments[0].click();", opcion)
+
+        esperar_fin_de_carga()
+
     try:
         # =========================
         # Navegación
@@ -64,9 +78,11 @@ def test_tarifario_excursiones(logged_in_driver):
             esperar_fin_de_carga()
 
         # =========================
-        # Filtro y búsqueda (SIN TOCAR DESTINO)
+        # Filtro y búsqueda
         # =========================
-        with allure.step("3. Ejecutar búsqueda con destino por defecto"):
+        with allure.step("3. Cambiar destino a Cachi y buscar"):
+            cambiar_destino("Buenos Aires", "Cachi")
+
             btn_buscar = wait.until(EC.presence_of_element_located((
                 By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView"
             )))
@@ -78,62 +94,144 @@ def test_tarifario_excursiones(logged_in_driver):
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="1_Busqueda_Excursiones",
+                name="1_Busqueda_Cachi",
                 attachment_type=allure.attachment_type.PNG
             )
 
         # =========================
-        # Modal proveedores desde el listado
+        # Tooltip 1: Duración
         # =========================
-        with allure.step("4. Abrir modal de Proveedores desde el listado y validar"):
-            btn_proveedores = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
-            )))
-
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
-            time.sleep(1)
-
-            # UN SOLO CLICK LIMPIO para no encender y apagar el modal por error
-            driver.execute_script("arguments[0].click();", btn_proveedores)
+        with allure.step("4. Validar tooltip de icono Duración"):
+            icono_duracion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", icono_duracion)
+            time.sleep(0.5)
             
-            # Esperamos que el contenedor del modal en sí aparezca (cualquiera sea su ID o clase de Bootstrap)
-            modal = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
+            actions.move_to_element(icono_duracion).pause(1).perform()
+
+            tooltip_duracion = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and contains(., 'Duración estimada del servicio')]"
             )))
             
-            # Esperamos 3 segundos a que el Ajax termine de rellenar el modal
-            time.sleep(3)
+            assert tooltip_duracion.is_displayed(), "El tooltip de duración no es visible."
+            
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="2_Tooltip_Duracion",
+                attachment_type=allure.attachment_type.PNG
+            )
 
-            # Buscamos de forma genérica CUALQUIER tabla dentro de ese modal
-            tds = modal.find_elements(By.TAG_NAME, "td")
-            texto_encontrado = any(td.text.strip() != "" for td in tds)
+        # =========================
+        # Tooltip 2: Idiomas
+        # =========================
+        with allure.step("5. Validar tooltip de icono Idiomas"):
+            icono_idiomas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
+            actions.move_to_element(icono_idiomas).pause(1).perform()
 
-            assert texto_encontrado, "Validación fallida: La tabla de proveedores en el modal cargó vacía o no se encontró."
+            tooltip_idiomas = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Idiomas')]]"
+            )))
+            
+            texto_idiomas = tooltip_idiomas.text
+            assert "Español" in texto_idiomas, "Falta idioma Español en el tooltip"
+            assert "English" in texto_idiomas, "Falta idioma English en el tooltip"
+            assert "Portuguese" in texto_idiomas, "Falta idioma Portuguese en el tooltip"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="2_Modal_Proveedores_Abierto",
+                name="3_Tooltip_Idiomas",
                 attachment_type=allure.attachment_type.PNG
             )
 
-            # CERRAR EL MODAL con la tecla ESCAPE y esperar a que desaparezca
+        # =========================
+        # Tooltip 3: Operatividad
+        # =========================
+        with allure.step("6. Validar tooltip de icono Operatividad"):
+            icono_operatividad = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
+            actions.move_to_element(icono_operatividad).pause(1).perform()
+
+            tooltip_operatividad = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Operatividad')]]"
+            )))
+            
+            texto_operatividad = tooltip_operatividad.text
+            assert "martes a miércoles, viernes a domingo" in texto_operatividad, "Faltan días en el tooltip de operatividad"
+            assert "enero a mayo, agosto a diciembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="4_Tooltip_Operatividad",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+        # =========================
+        # Validación Modal "Ver Proveedores"
+        # =========================
+        with allure.step("7. Abrir modal de Proveedores desde el listado y validar"):
+            # Quitamos el mouse del icono para que se cierre el tooltip anterior
+            actions.move_by_offset(0, -100).perform() 
+            time.sleep(0.5)
+
+            btn_proveedores = wait.until(EC.element_to_be_clickable((
+                By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
+            )))
+            
+            driver.execute_script("arguments[0].click();", btn_proveedores)
+            
+            # Validamos que cargue la tabla de proveedores dentro del modal
+            modal_prov = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
+            )))
+            time.sleep(3) # Espera para carga Ajax
+
+            tds = modal_prov.find_elements(By.TAG_NAME, "td")
+            assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="5_Modal_Proveedores",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+            # Cerramos el modal
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
             esperar_fin_de_carga()
 
         # =========================
-        # Detalle excursión
+        # Validación Modal "Ver Detalle"
         # =========================
-        with allure.step("5 y 6. Ingresar al detalle de la excursión y validar tabla de tarifas"):
+        with allure.step("8. Click en botón Ver Detalle y validar apertura de modal"):
+            btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-op-detail-btn")))
+            driver.execute_script("arguments[0].click();", btn_detalle)
+
+            modal_detalle = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "div.modal-content"
+            )))
+            
+            assert modal_detalle.is_displayed(), "El modal de detalle de operatividad no se renderizó."
+            time.sleep(1)
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="6_Modal_VerDetalle",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+            # Cerramos el modal de detalle para poder seguir navegando
+            actions.send_keys(Keys.ESCAPE).perform()
+            time.sleep(1)
+
+        # =========================
+        # Detalle Excursión (Tarifario)
+        # =========================
+        with allure.step("9. Ingresar al detalle de la excursión y validar tabla de tarifas"):
             btn_excursion = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "div.item1 a[id^='lnk']"
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
             
-            # Navegamos al detalle de la excursión
             driver.execute_script("arguments[0].click();", btn_excursion)
-
             esperar_fin_de_carga()
 
             tabla_detalle = wait.until(EC.visibility_of_element_located((
@@ -145,7 +243,7 @@ def test_tarifario_excursiones(logged_in_driver):
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="3_Detalle_Excursion_Validado",
+                name="7_Detalle_Excursion_Tarifas",
                 attachment_type=allure.attachment_type.PNG
             )
 
