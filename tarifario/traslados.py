@@ -16,7 +16,7 @@ Este caso de prueba cubre el flujo completo de Tarifario - Traslados:
 2. Búsqueda con destino Cachi.
 3. Validación de Tooltip de Duración.
 4. Validación de Tooltip de Idiomas.
-5. Validación de Tooltip de Operatividad.
+5. Validación de Tooltip de Operatividad (Todos los dias).
 6. Validación del modal "Ver Proveedores" desde el listado.
 7. Validación del modal "Ver Detalle".
 8. Ingreso al detalle del traslado y validación de la tabla de tarifas.
@@ -155,8 +155,8 @@ def test_tarifario_traslados_completo(logged_in_driver):
             )))
             
             texto_operatividad = tooltip_operatividad.text
-            assert "martes a miércoles, viernes a domingo" in texto_operatividad
-            assert "enero a mayo, agosto a diciembre" in texto_operatividad
+            assert "Todos los dias" in texto_operatividad, "Faltan días en el tooltip de operatividad"
+            assert "enero a julio, septiembre, noviembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
