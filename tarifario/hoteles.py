@@ -17,7 +17,8 @@ Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
 3. Validación de existencia del tag "Hotel Recomendado" (featured-tag).
 4. Validación del modal "Ver Proveedores" desde el listado.
 5. Validación del modal "Ver Detalle" (link con estilo primario).
-6. Ingreso al detalle del hotel y validación de la tabla de tarifas.
+6. Ingreso al detalle del hotel.
+7. Apertura del acordeón de habitación y validación de la tabla de tarifas.
 """)
 def test_tarifario_hoteles_completo(logged_in_driver):
     driver = logged_in_driver
@@ -71,13 +72,12 @@ def test_tarifario_hoteles_completo(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_tarifario)
             esperar_fin_de_carga()
 
-            # Por lo general, Hoteles es la pestaña por defecto, pero nos aseguramos de clickearla si existe el selector
             try:
                 btn_hoteles = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="#hotel"], #a-hotels')))
                 driver.execute_script("arguments[0].click();", btn_hoteles)
                 esperar_fin_de_carga()
             except:
-                pass # Si ya está activa o no existe el botón de tab, continuamos
+                pass 
 
         # =========================
         # Filtro y búsqueda
@@ -152,7 +152,6 @@ def test_tarifario_hoteles_completo(logged_in_driver):
         # Validación Modal "Ver Detalle"
         # =========================
         with allure.step("6. Click en botón Ver Detalle y validar modal"):
-            # Buscamos el link "Ver detalle »" con el color primario indicado
             btn_detalle = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "//a[contains(@style, 'var(--amv-primary)') and contains(., 'Ver detalle')]"
             )))
@@ -175,19 +174,30 @@ def test_tarifario_hoteles_completo(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # Detalle Hotel (Tarifario)
+        # Detalle Hotel y Acordeón (Tarifario)
         # =========================
-        with allure.step("7. Ingresar al detalle del hotel y validar tarifas"):
-            # Buscamos el título/enlace principal para entrar al detalle tarifario
+        with allure.step("7. Ingresar al detalle del hotel, abrir acordeón y validar tarifas"):
+            # 1. Entramos al detalle general del hotel
             btn_hotel = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "div.item1 a[id^='lnk']"
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_hotel)
             time.sleep(1)
-            
             driver.execute_script("arguments[0].click();", btn_hotel)
             esperar_fin_de_carga()
 
+            # 2. Buscamos y abrimos la primera opción del acordeón (dinámico)
+            btn_habitacion = wait.until(EC.element_to_be_clickable((
+                By.CSS_SELECTOR, "a[id^='accordeon-header-']"
+            )))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_habitacion)
+            time.sleep(1)
+            driver.execute_script("arguments[0].click();", btn_habitacion)
+            
+            # Esperamos a que la animación de Bootstrap despliegue el acordeón
+            time.sleep(2)
+
+            # 3. Validamos la tabla de tarifas ahora que es visible
             tabla_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
