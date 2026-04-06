@@ -1,0 +1,11 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circuito (Oferta):
+1. Login silencioso y navegación a la pestaña de Ofertas.
+2. Ingreso de fecha (hoy + 7 días) y cierre del calendario.
+3. Uso de los selectores para parámetros de viaje y habitación.
+4. Bucle dinámico que despliega CADA acordeón de itinerario y valida su contenido (Hoteles, Servicios, Servicios opcionales).
+5. Despliegue y validación estructural del acordeón 'Resumen de precios'.
+6. Avance a la pantalla final y validación VISUAL de la tabla de resumen.
+7. Agregado de la oferta al carrito de compras y validación de éxito.
+","34890","test_ofertas_nuevo_flujo","inicio","Mon Apr 06 13:52:11 UTC 2026","failed","Mon Apr 06 13:52:46 UTC 2026","","ofertas","",""
