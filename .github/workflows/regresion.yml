@@ -25,9 +25,10 @@ jobs:
         env:
           AMV_USER: ${{ secrets.AMV_USER }}
           AMV_PASS: ${{ secrets.AMV_PASS }}
+          AMV_AGENCIA_USER: ${{ secrets.AMV_AGENCIA_USER }}
 
         run: |
-         pytest inicio/login.py --alluredir=allure-results || true
+         pytest inicio/login_agencia.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
