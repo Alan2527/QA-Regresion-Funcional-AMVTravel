@@ -37,8 +37,16 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
 
     try:
         with allure.step("1. Navegar a la sección de Ofertas"):
-            btn_ofertas = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href*='offers/default.aspx']")))
+            # Nos aseguramos de que no haya un preloader bloqueando la vista apenas entra
+            wait.until(EC.invisibility_of_element_located((By.ID, "wpreloader_overlay")))
+            
+            # Buscamos el enlace por su texto exacto ("Ofertas"), ignorando mayúsculas/minúsculas o elementos internos
+            btn_ofertas = wait.until(EC.element_to_be_clickable((
+                By.XPATH, "//a[contains(translate(., 'OFERTAS', 'ofertas'), 'ofertas')]"
+            )))
             driver.execute_script("arguments[0].click();", btn_ofertas)
+            
+            # Esperar a que el preloader de la nueva vista desaparezca tras hacer el click
             wait.until(EC.invisibility_of_element_located((By.ID, "wpreloader_overlay")))
 
         with allure.step("2. Seleccionar fecha de viaje (7 días en el futuro)"):
@@ -144,7 +152,6 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
         # NUEVO BLOQUE: CARRITO
         # =========================
         with allure.step("15 y 16. Sumar al Carrito de compras y validar éxito"):
-            # Buscar el botón de agregar al carrito (XPath amplio para atajar distintas nomenclaturas)
             btn_agregar_carrito = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "//a[contains(@id, 'btnAddCart')] | //button[contains(translate(., 'CARRITO', 'carrito'), 'carrito')]"
             )))
@@ -152,18 +159,14 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
             time.sleep(0.5)
             driver.execute_script("arguments[0].click();", btn_agregar_carrito)
 
-            # Esperamos que desaparezca el preloader si lo hay
             wait.until(EC.invisibility_of_element_located((By.ID, "wpreloader_overlay")))
 
-            # VALIDACIÓN: Buscamos un mensaje de éxito, un modal, o validamos que la URL haya cambiado al checkout
-            # Esto usa un selector amplio buscando mensajes típicos de Bootstrap o de la app
             mensaje_exito = wait.until(EC.visibility_of_element_located((
                 By.XPATH, "//*[contains(@class, 'alert-success') or contains(@class, 'toast') or contains(translate(text(), 'ÉXITO', 'éxito'), 'éxito') or contains(@id, 'cart-badge')]"
             )))
             
             assert mensaje_exito.is_displayed(), "El producto no se agregó al carrito o no se mostró el mensaje de confirmación."
 
-            # Captura final del triunfo E2E
             allure.attach(driver.get_screenshot_as_png(), name="5_Agregado_Al_Carrito", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
