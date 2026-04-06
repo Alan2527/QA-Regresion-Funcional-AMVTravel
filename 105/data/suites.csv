@@ -1,0 +1,8 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba valida el acceso principal al sistema web de reservas.
+Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E dependen de una sesión válida.
+1. Navegación a qa.amv.travel.
+2. Inyección de credenciales seguras mediante GitHub Secrets.
+3. Validación de ingreso exitoso al portal interno.
+","7126","test_login_amv","inicio","Mon Apr 06 11:48:16 UTC 2026","passed","Mon Apr 06 11:48:23 UTC 2026","","login","",""
