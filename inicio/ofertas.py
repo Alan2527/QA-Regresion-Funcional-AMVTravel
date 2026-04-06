@@ -13,7 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.description("""
 Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circuito (Oferta):
 1. Login silencioso y navegación a la pestaña de Ofertas.
-2. Ingreso de fecha (hoy + 7 días) y cierre del calendario.
+2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
 3. Uso de los selectores para parámetros de viaje y habitación.
 4. Bucle dinámico que despliega CADA acordeón de itinerario y valida su contenido (Hoteles, Servicios, Servicios opcionales).
 5. Despliegue y validación estructural del acordeón 'Resumen de precios'.
@@ -37,16 +37,11 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
 
     try:
         with allure.step("1. Navegar a la sección de Ofertas"):
-            # Nos aseguramos de que no haya un preloader bloqueando la vista apenas entra
-            wait.until(EC.invisibility_of_element_located((By.ID, "wpreloader_overlay")))
-            
-            # Buscamos el enlace por su texto exacto ("Ofertas"), ignorando mayúsculas/minúsculas o elementos internos
-            btn_ofertas = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "//a[contains(translate(., 'OFERTAS', 'ofertas'), 'ofertas')]"
-            )))
+            # RESTAURAMOS TU SELECTOR ORIGINAL EXACTO
+            btn_ofertas = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href*='offers/default.aspx']")))
             driver.execute_script("arguments[0].click();", btn_ofertas)
             
-            # Esperar a que el preloader de la nueva vista desaparezca tras hacer el click
+            # Esperar a que el preloader de la nueva vista desaparezca
             wait.until(EC.invisibility_of_element_located((By.ID, "wpreloader_overlay")))
 
         with allure.step("2. Seleccionar fecha de viaje (7 días en el futuro)"):
