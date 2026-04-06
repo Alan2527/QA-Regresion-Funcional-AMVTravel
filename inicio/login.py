@@ -7,16 +7,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 @allure.feature("Login")
-@allure.story("Login de usuario")
+@allure.story("Login de usuario Administrador")
 @allure.severity(allure.severity_level.BLOCKER)
 @allure.description("""
-Este caso de prueba valida el acceso principal al sistema web de reservas.
-Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E dependen de una sesión válida.
+Este caso de prueba valida el acceso principal al sistema web de reservas con perfil Administrador.
+Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E dependen de una sesión válida con permisos elevados.
 1. Navegación a qa.amv.travel.
 2. Inyección de credenciales seguras mediante GitHub Secrets.
 3. Validación de ingreso exitoso al portal interno.
+4. Validación de perfil Admin comprobando la existencia de los selectores de simulación de agencia.
 """)
-def test_login_amv(driver):
+def test_login_admin(driver):
     wait = WebDriverWait(driver, 15)
 
     with allure.step("1. Ingresar a qa.amv.travel y click en Login"):
@@ -54,6 +55,21 @@ def test_login_amv(driver):
         
         # Damos unos segundos para que se resuelva el inicio de sesión y cargue la vista interna
         time.sleep(3) 
+
+    with allure.step("5. Validar sesión de Admin (Selectores de Agencia y Usuario)"):
+        # Validamos el selector de Agencia
+        selector_agencia = wait.until(EC.presence_of_element_located((
+            By.CSS_SELECTOR, "div.ts-wrapper.ddGuestAgency"
+        )))
         
-        # Tomamos la captura final para validar que entramos correctamente al sistema
-        allure.attach(driver.get_screenshot_as_png(), name="Post_Click_Ingresar", attachment_type=allure.attachment_type.PNG)
+        # Validamos el selector de Usuario
+        selector_usuario = wait.until(EC.presence_of_element_located((
+            By.CSS_SELECTOR, "div.ts-wrapper.ddGuestUser"
+        )))
+
+        # Aserciones para confirmar que los elementos no solo existen en el DOM, sino que son visibles
+        assert selector_agencia.is_displayed(), "Fallo la validación Admin: No se visualiza el selector de simulación de Agencia."
+        assert selector_usuario.is_displayed(), "Fallo la validación Admin: No se visualiza el selector de simulación de Usuario."
+
+        # Tomamos la captura final demostrando que estamos logueados y con la UI de Administrador
+        allure.attach(driver.get_screenshot_as_png(), name="Validacion_Exitosa_Admin", attachment_type=allure.attachment_type.PNG)
