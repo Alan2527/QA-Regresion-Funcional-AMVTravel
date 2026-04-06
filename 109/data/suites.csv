@@ -1,0 +1,6 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba valida el acceso al sistema con credenciales de Agencia.
+Asegura que la sesión se inicie correctamente pero valida estrictamente que
+los controles exclusivos de Administrador (simulación de agencia) NO sean visibles.
+","7714","test_login_agencia","inicio","Mon Apr 06 12:12:43 UTC 2026","passed","Mon Apr 06 12:12:51 UTC 2026","","login_agencia","",""
