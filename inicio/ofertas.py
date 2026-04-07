@@ -15,10 +15,11 @@ Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circ
 1. Login silencioso y navegación a la pestaña de Ofertas.
 2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
 3. Uso de los selectores para parámetros de viaje y habitación.
-4. Validación de la carga de imágenes por defecto y estructura HTML.
-5. Avance a la pantalla final y validación VISUAL de la tabla de resumen.
+4. Validación de la estructura HTML.
+5.Validar que se sume al carrito de compras.
+6. Avance a la pantalla final y validación visual de la tabla de cotizaciones.
 """)
-def test_ofertas_nuevo_flujo(logged_in_driver):
+def test_ofertas(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
     actions = ActionChains(driver)
@@ -72,7 +73,6 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
         with allure.step("12 y 13. Avanzar y validar VISUALMENTE la existencia de la tabla final"):
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lnkNext"))).click()
             
-            # Validación a prueba de balas: Busca todas las tablas y espera a que al menos UNA sea visible
             wait.until(
                 lambda d: any(tabla.is_displayed() for tabla in d.find_elements(By.CSS_SELECTOR, "table.table.table-bordered.table-striped")),
                 message="Validación fallida: Ninguna tabla de resumen se hizo visible."
@@ -83,5 +83,5 @@ def test_ofertas_nuevo_flujo(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="4_Tabla_Final_Validada", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
-        allure.attach(driver.get_screenshot_as_png(), name="Fallo_en_Nuevo_Flujo_Ofertas", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="Fallo_en_Ofertas", attachment_type=allure.attachment_type.PNG)
         pytest.fail(f"El test falló durante la ejecución: {str(e)}")
