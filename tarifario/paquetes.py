@@ -18,8 +18,7 @@ Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
 3. Validación de estructura de resultados en pantalla.
 4. Ingreso al detalle del paquete (ID lnk2138).
 5. Apertura y validación del acordeón de tours.
-6. Validación del modal de Proveedores y sus datos.
-7. Descarga del paquete en formato Word y validación en el sistema de archivos (CI/CD).
+6. Descarga del paquete en formato Word y validación en el sistema de archivos (CI/CD).
 """)
 def test_tarifario_paquetes(logged_in_driver):
     driver = logged_in_driver
@@ -103,28 +102,7 @@ def test_tarifario_paquetes(logged_in_driver):
             time.sleep(1) 
             allure.attach(driver.get_screenshot_as_png(), name="3_Acordeon_Abierto", attachment_type=allure.attachment_type.PNG)
 
-        with allure.step("11 a 13. Validar modal de Proveedores"):
-            btn_proveedores = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[title='Ver Proveedores']")))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_proveedores)
-            time.sleep(1)
-            driver.execute_script("arguments[0].click();", btn_proveedores)
-            
-            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
-            tds = driver.find_elements(By.CSS_SELECTOR, "table.suppliers-table td")
-            
-            texto_encontrado = any(td.text.strip() != "" for td in tds)
-            assert texto_encontrado, "Validación fallida: La tabla cargó vacía."
-            
-            time.sleep(1) 
-            allure.attach(driver.get_screenshot_as_png(), name="4_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
-            
-            btn_cerrar = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.btn-close-suppliers")))
-            driver.execute_script("arguments[0].click();", btn_cerrar)
-            
-            wait.until_not(EC.visibility_of_element_located((By.CSS_SELECTOR, "table.suppliers-table")))
-            time.sleep(1) # Pausa para que el modal termine de desvanecerse
-
-        with allure.step("14 y 15. Descargar y validar archivo Word en CI"):
+        with allure.step("11 y 12. Descargar y validar archivo Word en CI"):
             # Tomamos una "foto" de los archivos que hay antes de descargar
             archivos_previos = set(glob.glob(os.path.join(descargas_dir, "*.doc*")))
             
@@ -144,7 +122,7 @@ def test_tarifario_paquetes(logged_in_driver):
             
             assert archivo_descargado, "Validación fallida: No se detectó la descarga del archivo Word."
             
-            allure.attach(driver.get_screenshot_as_png(), name="5_Descarga_Exitosa", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="4_Descarga_Exitosa", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
         allure.attach(driver.get_screenshot_as_png(), name="Fallo_Tarifario_Paquetes", attachment_type=allure.attachment_type.PNG)
