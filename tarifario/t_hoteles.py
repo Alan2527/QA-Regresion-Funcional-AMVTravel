@@ -20,7 +20,7 @@ Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
 6. Ingreso al detalle del hotel.
 7. Apertura del acordeón de habitación y validación de la tabla de tarifas.
 """)
-def test_tarifario_hoteles_completo(logged_in_driver):
+def test_tarifario_hoteles(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
     actions = ActionChains(driver)
