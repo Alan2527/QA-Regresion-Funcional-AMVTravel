@@ -13,7 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.description("""
 Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circuito (Oferta):
 1. Login silencioso y navegación a la pestaña de Ofertas.
-2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario clickeando fuera.
+2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario.
 3. Uso de los selectores para parámetros de viaje y habitación.
 4. Validación de la estructura HTML.
 5. Avance a la pantalla final y validación visual de la tabla de cotizaciones.
