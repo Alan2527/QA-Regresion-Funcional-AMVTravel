@@ -10,9 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 @allure.story("Login de usuario Agencia (Prueba Negativa de Permisos)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba valida el acceso al sistema con credenciales de Agencia.
-Asegura que la sesión se inicie correctamente pero valida estrictamente que
-los controles exclusivos de Administrador (simulación de agencia) NO sean visibles.
+Este caso de prueba valida el acceso principal al sistema web de reservas con perfil Agencia.
+1. Navegación a qa.amv.travel.
+2. Inyección de credenciales seguras mediante GitHub Secrets.
+3. Validación de ingreso exitoso al portal interno.
+4. Validación de perfil Agencia comprobando la NO existencia de los selectores de simulación de agencia.
 """)
 def test_login_agencia(driver):
     wait = WebDriverWait(driver, 15)
