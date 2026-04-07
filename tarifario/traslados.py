@@ -21,7 +21,7 @@ Este caso de prueba cubre el flujo completo de Tarifario - Traslados:
 7. Validación del modal "Ver Detalle".
 8. Ingreso al detalle del traslado y validación de la tabla de tarifas.
 """)
-def test_tarifario_traslados_completo(logged_in_driver):
+def test_tarifario_traslados(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
     actions = ActionChains(driver)
