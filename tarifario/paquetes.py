@@ -82,9 +82,29 @@ def test_tarifario_paquetes(logged_in_driver):
             btn_paquete = wait.until(EC.presence_of_element_located((By.ID, "lnk2138")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_paquete)
             time.sleep(1)
-            btn_paquete.send_keys(Keys.ENTER)
             
-            esperar_fin_de_carga() 
+            # --- INICIO NUEVA VALIDACIÓN: TOGGLE BOTÓN VER/CERRAR TARIFARIO ---
+            texto_inicial = btn_paquete.text.strip().lower()
+            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'Ver...'"
+
+            btn_paquete.send_keys(Keys.ENTER)
+            esperar_fin_de_carga()
+            time.sleep(1)
+
+            texto_abierto = btn_paquete.text.strip().lower()
+            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'Cerrar...', dice '{texto_abierto}'"
+
+            btn_paquete.send_keys(Keys.ENTER)
+            time.sleep(1)
+
+            texto_cerrado = btn_paquete.text.strip().lower()
+            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'Ver...', quedó en '{texto_cerrado}'"
+
+            btn_paquete.send_keys(Keys.ENTER)
+            esperar_fin_de_carga()
+            time.sleep(1)
+            # --- FIN NUEVA VALIDACIÓN ---
+            
             allure.attach(driver.get_screenshot_as_png(), name="2_Ingreso_Detalle_Paquete", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("8 a 10. Validar renderizado y apertura del acordeón de tours"):
