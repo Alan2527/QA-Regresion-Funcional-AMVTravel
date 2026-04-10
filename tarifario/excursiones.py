@@ -231,8 +231,27 @@ def test_tarifario(logged_in_driver):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
             time.sleep(1)
             
+            # --- INICIO NUEVA VALIDACIÓN: TOGGLE BOTÓN VER/CERRAR TARIFARIO ---
+            texto_inicial = btn_excursion.text.strip().lower()
+            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'Ver...'"
+
             driver.execute_script("arguments[0].click();", btn_excursion)
             esperar_fin_de_carga()
+            time.sleep(1)
+
+            texto_abierto = btn_excursion.text.strip().lower()
+            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'Cerrar...', dice '{texto_abierto}'"
+
+            driver.execute_script("arguments[0].click();", btn_excursion)
+            time.sleep(1)
+
+            texto_cerrado = btn_excursion.text.strip().lower()
+            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'Ver...', quedó en '{texto_cerrado}'"
+
+            driver.execute_script("arguments[0].click();", btn_excursion)
+            esperar_fin_de_carga()
+            time.sleep(1)
+            # --- FIN NUEVA VALIDACIÓN ---
 
             tabla_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
