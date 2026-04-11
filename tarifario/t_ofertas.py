@@ -75,7 +75,7 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal
+        # 4 Modal (FIX REAL)
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
@@ -83,13 +83,25 @@ def test_tarifario_ofertas(logged_in_driver):
                 By.XPATH, "//a[contains(., 'Ver detalle')]"
             )))
 
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
+            time.sleep(1)
+
             driver.execute_script("arguments[0].click();", btn_detalle)
 
-            modal = wait.until(EC.visibility_of_element_located((
+            # Esperar que el modal exista
+            modal = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "div.modal-content"
             )))
 
-            assert modal.is_displayed(), "El modal no se mostró"
+            # Esperar que sea visible
+            wait.until(EC.visibility_of(modal))
+
+            # Esperar animación bootstrap (fade show)
+            wait.until(lambda d: "show" in modal.find_element(
+                By.XPATH, "./ancestor::div[contains(@class,'modal')]"
+            ).get_attribute("class"))
+
+            assert modal.is_displayed(), "El modal no se mostró correctamente"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -98,10 +110,12 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             actions.send_keys(Keys.ESCAPE).perform()
-            time.sleep(1)
+
+            # Esperar que cierre
+            wait.until(EC.invisibility_of_element(modal))
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (TEXTO + ÍCONO)
+        # 5 Toggle VALIDACIÓN EXACTA
         # =========================
         with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
 
@@ -170,7 +184,7 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 6 Acordeón y tabla
+        # 6 Acordeón
         # =========================
         with allure.step("6. Apertura del acordeón y validación de tarifas"):
 
