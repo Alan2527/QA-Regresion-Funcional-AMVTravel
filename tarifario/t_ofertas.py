@@ -110,46 +110,56 @@ def test_tarifario_ofertas(logged_in_driver):
         # Detalle Oferta y Acordeón (Tarifario)
         # =========================
         with allure.step("5. Ingresar al detalle de la oferta y validar botón Ver/Cerrar"):
-            btn_oferta = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "div.item1 a[id^='lnk']"
-            )))
+            
+            # Helper para obtener el botón FRESCO y evitar "StaleElementReferenceException"
+            def get_btn():
+                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
+            
+            # Helper para obtener el texto FRESCO apuntando directamente al div interno
+            def get_btn_text(d):
+                try:
+                    elemento = d.find_element(By.CSS_SELECTOR, "div.item1 a[id^='lnk'] div.tariff-op-detail-btn-txt")
+                    return elemento.get_attribute("textContent").strip().lower()
+                except:
+                    return "" # Si en medio del re-renderizado no lo encuentra, devuelve vacío temporalmente
+
+            # Scroll inicial
+            btn_oferta = get_btn()
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_oferta)
             time.sleep(1)
             
-            # --- INICIO VALIDACIÓN DOM ---
-            # Apuntamos exactamente al div interno que descubriste en la captura
-            div_texto = btn_oferta.find_element(By.CSS_SELECTOR, "div.tariff-op-detail-btn-txt")
-            
-            texto_inicial = div_texto.get_attribute("textContent").strip().lower()
+            # --- INICIO VALIDACIÓN DOM ANTIBUGS ---
+            texto_inicial = get_btn_text(driver)
             assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'ver'"
 
             # Primer Clic: Abrir
-            driver.execute_script("arguments[0].click();", btn_oferta)
+            driver.execute_script("arguments[0].click();", get_btn())
             
-            # Espera dinámica atada exclusivamente al texto del div
-            wait.until(lambda d: "cerrar" in div_texto.get_attribute("textContent").strip().lower())
+            # Espera dinámica: Busca el texto una y otra vez de forma fresca
+            wait.until(lambda d: "cerrar" in get_btn_text(d))
             time.sleep(1)
 
-            texto_abierto = div_texto.get_attribute("textContent").strip().lower()
+            texto_abierto = get_btn_text(driver)
             assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'cerrar', dice '{texto_abierto}'"
 
             # Segundo Clic: Cerrar
-            driver.execute_script("arguments[0].click();", btn_oferta)
+            driver.execute_script("arguments[0].click();", get_btn())
             
-            wait.until(lambda d: "ver" in div_texto.get_attribute("textContent").strip().lower())
+            wait.until(lambda d: "ver" in get_btn_text(d))
             time.sleep(1)
 
-            texto_cerrado = div_texto.get_attribute("textContent").strip().lower()
+            texto_cerrado = get_btn_text(driver)
             assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'ver', quedó en '{texto_cerrado}'"
 
             # Tercer Clic: Volver a abrir para continuar la prueba
-            driver.execute_script("arguments[0].click();", btn_oferta)
-            wait.until(lambda d: "cerrar" in div_texto.get_attribute("textContent").strip().lower())
+            driver.execute_script("arguments[0].click();", get_btn())
+            wait.until(lambda d: "cerrar" in get_btn_text(d))
             time.sleep(1)
             esperar_fin_de_carga()
-            # --- FIN VALIDACIÓN DOM ---
+            # --- FIN VALIDACIÓN DOM ANTIBUGS ---
 
         with allure.step("6. Apertura del acordeón específico y validación de tarifas"):
+            # Buscamos el acordeón específico solicitado por ID
             btn_acordeon = wait.until(EC.element_to_be_clickable((
                 By.ID, "accordeon-header-bfce9d58-98a4-4fe6-b706-6aa2e6e52730"
             )))
@@ -157,8 +167,10 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
             driver.execute_script("arguments[0].click();", btn_acordeon)
             
+            # Esperamos a que la animación de Bootstrap despliegue el acordeón
             time.sleep(2)
 
+            # Validamos la tabla de tarifas ahora que es visible
             tabla_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
