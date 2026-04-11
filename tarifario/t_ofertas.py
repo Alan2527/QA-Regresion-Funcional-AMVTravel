@@ -66,7 +66,6 @@ def test_tarifario_ofertas(logged_in_driver):
         # Filtro y búsqueda
         # =========================
         with allure.step("3. Buscar ofertas en Buenos Aires"):
-            # Al ser Buenos Aires el destino por defecto, accionamos el buscador directamente
             btn_buscar = wait.until(EC.presence_of_element_located((
                 By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView"
             )))
@@ -121,21 +120,31 @@ def test_tarifario_ofertas(logged_in_driver):
             texto_inicial = btn_oferta.text.strip().lower()
             assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'Ver...'"
 
+            # Primer Clic: Abrir
             driver.execute_script("arguments[0].click();", btn_oferta)
             esperar_fin_de_carga()
-            time.sleep(1)
+            
+            # Espera dinámica: aguanta hasta que el texto del botón cambie (max 15s por el WebDriverWait global)
+            wait.until(lambda d: "cerrar" in btn_oferta.text.strip().lower())
+            time.sleep(1) # Pausa extra por estabilidad de renderizado
 
             texto_abierto = btn_oferta.text.strip().lower()
             assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'Cerrar...', dice '{texto_abierto}'"
 
+            # Segundo Clic: Cerrar
             driver.execute_script("arguments[0].click();", btn_oferta)
+            
+            # Espera dinámica: aguanta hasta que vuelva a decir 'ver'
+            wait.until(lambda d: "ver" in btn_oferta.text.strip().lower())
             time.sleep(1)
 
             texto_cerrado = btn_oferta.text.strip().lower()
             assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'Ver...', quedó en '{texto_cerrado}'"
 
+            # Tercer Clic: Volver a abrir para continuar la prueba
             driver.execute_script("arguments[0].click();", btn_oferta)
             esperar_fin_de_carga()
+            wait.until(lambda d: "cerrar" in btn_oferta.text.strip().lower())
             time.sleep(1)
             # --- FIN NUEVA VALIDACIÓN ---
 
