@@ -7,7 +7,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
 @allure.feature("Tarifario")
 @allure.story("Consulta de Ofertas Completa (Modales y Tarifas)")
 @allure.severity(allure.severity_level.CRITICAL)
@@ -75,29 +74,25 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal (FIX: Validación simple y efectiva)
+        # 4 Modal (El fix que funcionó perfecto)
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
-            # XPath robusto usando los atributos exactos que proveíste
             XPATH_DETALLE = "//a[@href='javascript:void(0);' and contains(@style, 'var(--amv-primary)') and contains(., 'Ver detalle')]"
 
             def get_btn_detalle():
                 return wait.until(EC.presence_of_element_located((By.XPATH, XPATH_DETALLE)))
 
-            # Buscamos y hacemos scroll
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn_detalle())
             time.sleep(1)
 
-            # RE-BUSCAMOS el botón justo en el milisegundo que hacemos clic para evitar StaleElement
             driver.execute_script("arguments[0].click();", get_btn_detalle())
 
-            # Esperar que el modal sea visible de forma sencilla
             modal_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "div.modal-content"
             )))
-            
-            time.sleep(1) # Un segundito para que termine la animación visual antes de la foto
+
+            time.sleep(1) 
 
             assert modal_detalle.is_displayed(), "El modal de detalle de la oferta no se renderizó."
 
@@ -108,39 +103,37 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             actions.send_keys(Keys.ESCAPE).perform()
-
-            # Esperar que cierre
             wait.until(EC.invisibility_of_element(modal_detalle))
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA
+        # 5 Toggle VALIDACIÓN EXACTA (Anti-Timeout)
         # =========================
         with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
 
-            SELECTOR_BTN = "a.accordeon-header.tariff-detail.tariff-view-table.toggle-asigned"
+            # Le sacamos la clase dinámica 'toggle-asigned' para que no rompa el timeout
+            SELECTOR_BTN = "a.accordeon-header.tariff-detail"
 
+            # Helper para atrapar el botón fresco siempre
             def get_btn():
                 return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_BTN)))
 
-            def get_text(btn):
-                return btn.text.strip()
+            def get_text():
+                return get_btn().get_attribute("textContent").strip()
 
-            def has_icon(btn, icon_class):
+            def has_icon(icon_class):
                 try:
-                    btn.find_element(By.CSS_SELECTOR, f"i.{icon_class.replace(' ', '.')}")
+                    get_btn().find_element(By.CSS_SELECTOR, f"i.{icon_class.replace(' ', '.')}")
                     return True
                 except:
                     return False
 
             # -------- ESTADO INICIAL --------
-            btn = get_btn()
-
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn())
             time.sleep(1)
 
-            assert get_text(btn) == "Ver Tarifario", f"Texto incorrecto: {get_text(btn)}"
-            assert has_icon(btn, "zmdi zmdi-chevron-down"), "Falta ícono flecha abajo"
+            assert get_text() == "Ver Tarifario", f"Texto incorrecto: {get_text()}"
+            assert has_icon("zmdi zmdi-chevron-down"), "Falta ícono flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -149,15 +142,13 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             # -------- CLICK → CERRAR --------
-            driver.execute_script("arguments[0].click();", btn)
+            driver.execute_script("arguments[0].click();", get_btn())
 
-            wait.until(EC.staleness_of(btn))
-            esperar_fin_de_carga()
+            # Esperamos dinámicamente a que el TEXTO cambie (sin depender de staleness_of)
+            wait.until(lambda d: get_text() == "Cerrar Tarifario", message="El botón no cambió a 'Cerrar Tarifario'")
+            time.sleep(0.5)
 
-            btn = get_btn()
-
-            assert get_text(btn) == "Cerrar Tarifario", f"Texto incorrecto: {get_text(btn)}"
-            assert has_icon(btn, "zmdi zmdi-chevron-up"), "Falta ícono flecha arriba"
+            assert has_icon("zmdi zmdi-chevron-up"), "Falta ícono flecha arriba"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -166,15 +157,13 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             # -------- CLICK → VOLVER A VER --------
-            driver.execute_script("arguments[0].click();", btn)
+            driver.execute_script("arguments[0].click();", get_btn())
 
-            wait.until(EC.staleness_of(btn))
-            esperar_fin_de_carga()
+            # Esperamos dinámicamente a que el TEXTO vuelva a la normalidad
+            wait.until(lambda d: get_text() == "Ver Tarifario", message="El botón no volvió a 'Ver Tarifario'")
+            time.sleep(0.5)
 
-            btn = get_btn()
-
-            assert get_text(btn) == "Ver Tarifario", f"Texto incorrecto: {get_text(btn)}"
-            assert has_icon(btn, "zmdi zmdi-chevron-down"), "No volvió flecha abajo"
+            assert has_icon("zmdi zmdi-chevron-down"), "No volvió flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
