@@ -74,7 +74,7 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal (El fix que funcionó perfecto)
+        # 4 Modal 
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
@@ -92,7 +92,7 @@ def test_tarifario_ofertas(logged_in_driver):
                 By.CSS_SELECTOR, "div.modal-content"
             )))
 
-            time.sleep(1) 
+            time.sleep(1)
 
             assert modal_detalle.is_displayed(), "El modal de detalle de la oferta no se renderizó."
 
@@ -107,14 +107,29 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (Anti-Timeout)
+        # 5 ABRIR LA TARJETA PRINCIPAL (El paso que faltaba)
         # =========================
-        with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
+        with allure.step("5. Expandir la tarjeta principal de la oferta"):
+            
+            btn_main = wait.until(EC.presence_of_element_located((
+                By.CSS_SELECTOR, "div.item1 a[id*='lnk']"
+            )))
+            
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_main)
+            time.sleep(1)
+            
+            # Esto obliga a la web a inyectar el acordeón "Ver Tarifario" en el HTML
+            driver.execute_script("arguments[0].click();", btn_main)
+            esperar_fin_de_carga()
 
-            # Le sacamos la clase dinámica 'toggle-asigned' para que no rompa el timeout
+        # =========================
+        # 6 Toggle VALIDACIÓN EXACTA Y TABLA
+        # =========================
+        with allure.step("6. Validar toggle Ver/Cerrar Tarifario y Tabla"):
+
+            # Ahora el selector sí existe porque ya abrimos la tarjeta
             SELECTOR_BTN = "a.accordeon-header.tariff-detail"
 
-            # Helper para atrapar el botón fresco siempre
             def get_btn():
                 return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_BTN)))
 
@@ -144,59 +159,36 @@ def test_tarifario_ofertas(logged_in_driver):
             # -------- CLICK → CERRAR --------
             driver.execute_script("arguments[0].click();", get_btn())
 
-            # Esperamos dinámicamente a que el TEXTO cambie (sin depender de staleness_of)
             wait.until(lambda d: get_text() == "Cerrar Tarifario", message="El botón no cambió a 'Cerrar Tarifario'")
-            time.sleep(0.5)
+            time.sleep(1)
 
             assert has_icon("zmdi zmdi-chevron-up"), "Falta ícono flecha arriba"
 
+            # Validamos la tabla ya que está abierto
+            tabla = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
+            )))
+
+            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
+            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="4_Cerrar_Tarifario_OK",
+                name="4_Cerrar_Tarifario_OK_Y_Tabla",
                 attachment_type=allure.attachment_type.PNG
             )
 
             # -------- CLICK → VOLVER A VER --------
             driver.execute_script("arguments[0].click();", get_btn())
 
-            # Esperamos dinámicamente a que el TEXTO vuelva a la normalidad
             wait.until(lambda d: get_text() == "Ver Tarifario", message="El botón no volvió a 'Ver Tarifario'")
-            time.sleep(0.5)
+            time.sleep(1)
 
             assert has_icon("zmdi zmdi-chevron-down"), "No volvió flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
                 name="5_Vuelve_Ver_Tarifario_OK",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-        # =========================
-        # 6 Acordeón
-        # =========================
-        with allure.step("6. Apertura del acordeón y validación de tarifas"):
-
-            btn_acordeon = wait.until(EC.element_to_be_clickable((
-                By.ID, "accordeon-header-bfce9d58-98a4-4fe6-b706-6aa2e6e52730"
-            )))
-
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_acordeon)
-            time.sleep(1)
-
-            driver.execute_script("arguments[0].click();", btn_acordeon)
-            time.sleep(2)
-
-            tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="6_Detalle_Oferta_Tarifas",
                 attachment_type=allure.attachment_type.PNG
             )
 
