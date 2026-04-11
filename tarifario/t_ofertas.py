@@ -75,7 +75,7 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal (FIX ANTI-STALE + SELECTOR EXACTO)
+        # 4 Modal (FIX: Validación simple y efectiva)
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
@@ -92,20 +92,14 @@ def test_tarifario_ofertas(logged_in_driver):
             # RE-BUSCAMOS el botón justo en el milisegundo que hacemos clic para evitar StaleElement
             driver.execute_script("arguments[0].click();", get_btn_detalle())
 
-            # Esperar que el modal exista
-            modal = wait.until(EC.presence_of_element_located((
+            # Esperar que el modal sea visible de forma sencilla
+            modal_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "div.modal-content"
             )))
+            
+            time.sleep(1) # Un segundito para que termine la animación visual antes de la foto
 
-            # Esperar que sea visible
-            wait.until(EC.visibility_of(modal))
-
-            # Esperar animación bootstrap (fade show)
-            wait.until(lambda d: "show" in modal.find_element(
-                By.XPATH, "./ancestor::div[contains(@class,'modal')]"
-            ).get_attribute("class"))
-
-            assert modal.is_displayed(), "El modal no se mostró correctamente"
+            assert modal_detalle.is_displayed(), "El modal de detalle de la oferta no se renderizó."
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -116,7 +110,8 @@ def test_tarifario_ofertas(logged_in_driver):
             actions.send_keys(Keys.ESCAPE).perform()
 
             # Esperar que cierre
-            wait.until(EC.invisibility_of_element(modal))
+            wait.until(EC.invisibility_of_element(modal_detalle))
+            time.sleep(1)
 
         # =========================
         # 5 Toggle VALIDACIÓN EXACTA
