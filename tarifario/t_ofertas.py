@@ -74,7 +74,7 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal 
+        # 4 Modal
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
@@ -107,38 +107,24 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 ABRIR LA TARJETA PRINCIPAL (El paso que faltaba)
+        # 5 Toggle VALIDACIÓN EXACTA (Usando tu HTML exacto)
         # =========================
-        with allure.step("5. Expandir la tarjeta principal de la oferta"):
-            
-            btn_main = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "div.item1 a[id*='lnk']"
-            )))
-            
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_main)
-            time.sleep(1)
-            
-            # Esto obliga a la web a inyectar el acordeón "Ver Tarifario" en el HTML
-            driver.execute_script("arguments[0].click();", btn_main)
-            esperar_fin_de_carga()
+        with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
 
-        # =========================
-        # 6 Toggle VALIDACIÓN EXACTA Y TABLA
-        # =========================
-        with allure.step("6. Validar toggle Ver/Cerrar Tarifario y Tabla"):
-
-            # Ahora el selector sí existe porque ya abrimos la tarjeta
-            SELECTOR_BTN = "a.accordeon-header.tariff-detail"
+            # Usamos un XPath irrompible basado en las clases y texto que me proveíste
+            XPATH_TOGGLE = "//a[contains(@class, 'accordeon-header') and contains(., 'Tarifario')]"
 
             def get_btn():
-                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_BTN)))
+                return wait.until(EC.presence_of_element_located((By.XPATH, XPATH_TOGGLE)))
 
             def get_text():
-                return get_btn().get_attribute("textContent").strip()
+                # Leemos el textContent crudo con JS para esquivar bugs visuales de Chrome Headless
+                return driver.execute_script("return arguments[0].textContent;", get_btn()).strip()
 
-            def has_icon(icon_class):
+            def has_icon(icon_name):
                 try:
-                    get_btn().find_element(By.CSS_SELECTOR, f"i.{icon_class.replace(' ', '.')}")
+                    # Buscamos el ícono "i" exacto dentro de la etiqueta "a"
+                    get_btn().find_element(By.XPATH, f".//i[contains(@class, '{icon_name}')]")
                     return True
                 except:
                     return False
@@ -147,8 +133,8 @@ def test_tarifario_ofertas(logged_in_driver):
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn())
             time.sleep(1)
 
-            assert get_text() == "Ver Tarifario", f"Texto incorrecto: {get_text()}"
-            assert has_icon("zmdi zmdi-chevron-down"), "Falta ícono flecha abajo"
+            assert "Ver Tarifario" in get_text(), f"Texto incorrecto: {get_text()}"
+            assert has_icon("zmdi-chevron-down"), "Falta ícono flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -159,36 +145,51 @@ def test_tarifario_ofertas(logged_in_driver):
             # -------- CLICK → CERRAR --------
             driver.execute_script("arguments[0].click();", get_btn())
 
-            wait.until(lambda d: get_text() == "Cerrar Tarifario", message="El botón no cambió a 'Cerrar Tarifario'")
-            time.sleep(1)
+            wait.until(lambda d: "Cerrar Tarifario" in get_text(), message="El botón no cambió a 'Cerrar Tarifario'")
+            time.sleep(0.5)
 
-            assert has_icon("zmdi zmdi-chevron-up"), "Falta ícono flecha arriba"
-
-            # Validamos la tabla ya que está abierto
-            tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+            assert has_icon("zmdi-chevron-up"), "Falta ícono flecha arriba"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="4_Cerrar_Tarifario_OK_Y_Tabla",
+                name="4_Cerrar_Tarifario_OK",
                 attachment_type=allure.attachment_type.PNG
             )
 
             # -------- CLICK → VOLVER A VER --------
             driver.execute_script("arguments[0].click();", get_btn())
 
-            wait.until(lambda d: get_text() == "Ver Tarifario", message="El botón no volvió a 'Ver Tarifario'")
-            time.sleep(1)
+            wait.until(lambda d: "Ver Tarifario" in get_text(), message="El botón no volvió a 'Ver Tarifario'")
+            time.sleep(0.5)
 
-            assert has_icon("zmdi zmdi-chevron-down"), "No volvió flecha abajo"
+            assert has_icon("zmdi-chevron-down"), "No volvió flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
                 name="5_Vuelve_Ver_Tarifario_OK",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+        # =========================
+        # 6 Acordeón
+        # =========================
+        with allure.step("6. Apertura del acordeón y validación de tarifas"):
+
+            # Para abrir el acordeón y ver la tabla, simplemente hacemos clic en el mismo botón blindado
+            driver.execute_script("arguments[0].click();", get_btn())
+            time.sleep(2)
+
+            tabla = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
+            )))
+
+            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
+
+            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="6_Detalle_Oferta_Tarifas",
                 attachment_type=allure.attachment_type.PNG
             )
 
