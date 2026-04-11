@@ -111,52 +111,44 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         with allure.step("5. Ingresar al detalle de la oferta y validar botón Ver/Cerrar"):
             
-            # Helper para obtener el botón FRESCO y evitar "StaleElementReferenceException"
-            def get_btn():
-                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
+            # Helper 1: Busca siempre la versión más fresca del botón (id contiene 'lnk')
+            def get_btn(d):
+                return d.find_element(By.CSS_SELECTOR, "div.item1 a[id*='lnk']")
             
-            # Helper para obtener el texto FRESCO apuntando directamente al div interno
+            # Helper 2: Extrae el texto sucio y lo limpia, resistiendo fallos de carga
             def get_btn_text(d):
                 try:
-                    elemento = d.find_element(By.CSS_SELECTOR, "div.item1 a[id^='lnk'] div.tariff-op-detail-btn-txt")
-                    return elemento.get_attribute("textContent").strip().lower()
+                    return get_btn(d).get_attribute("textContent").strip().lower()
                 except:
-                    return "" # Si en medio del re-renderizado no lo encuentra, devuelve vacío temporalmente
+                    return ""
 
             # Scroll inicial
-            btn_oferta = get_btn()
+            btn_oferta = wait.until(lambda d: get_btn(d))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_oferta)
             time.sleep(1)
             
-            # --- INICIO VALIDACIÓN DOM ANTIBUGS ---
-            texto_inicial = get_btn_text(driver)
-            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'ver'"
+            # --- INICIO VALIDACIÓN DOM DINÁMICA ---
+            # 1. Esperamos dinámicamente el estado inicial (Esto previene el error que te dio recién)
+            wait.until(lambda d: "ver" in get_btn_text(d), message="El botón inicial no cargó el texto 'ver'")
 
-            # Primer Clic: Abrir
-            driver.execute_script("arguments[0].click();", get_btn())
+            # 2. Primer Clic: Abrir
+            driver.execute_script("arguments[0].click();", get_btn(driver))
+            esperar_fin_de_carga()
             
-            # Espera dinámica: Busca el texto una y otra vez de forma fresca
-            wait.until(lambda d: "cerrar" in get_btn_text(d))
-            time.sleep(1)
+            wait.until(lambda d: "cerrar" in get_btn_text(d), message="El botón no cambió a 'cerrar'")
 
-            texto_abierto = get_btn_text(driver)
-            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'cerrar', dice '{texto_abierto}'"
-
-            # Segundo Clic: Cerrar
-            driver.execute_script("arguments[0].click();", get_btn())
+            # 3. Segundo Clic: Cerrar
+            driver.execute_script("arguments[0].click();", get_btn(driver))
             
-            wait.until(lambda d: "ver" in get_btn_text(d))
-            time.sleep(1)
+            wait.until(lambda d: "ver" in get_btn_text(d), message="El botón no volvió a 'ver'")
 
-            texto_cerrado = get_btn_text(driver)
-            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'ver', quedó en '{texto_cerrado}'"
-
-            # Tercer Clic: Volver a abrir para continuar la prueba
-            driver.execute_script("arguments[0].click();", get_btn())
-            wait.until(lambda d: "cerrar" in get_btn_text(d))
+            # 4. Tercer Clic: Volver a abrir para continuar la prueba
+            driver.execute_script("arguments[0].click();", get_btn(driver))
+            
+            wait.until(lambda d: "cerrar" in get_btn_text(d), message="El botón no se volvió a abrir ('cerrar')")
             time.sleep(1)
             esperar_fin_de_carga()
-            # --- FIN VALIDACIÓN DOM ANTIBUGS ---
+            # --- FIN VALIDACIÓN DOM DINÁMICA ---
 
         with allure.step("6. Apertura del acordeón específico y validación de tarifas"):
             # Buscamos el acordeón específico solicitado por ID
