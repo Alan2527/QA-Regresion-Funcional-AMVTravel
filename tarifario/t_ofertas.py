@@ -111,11 +111,15 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         with allure.step("5. Ingresar al detalle de la oferta y validar botón Ver/Cerrar"):
             
-            # Helper 1: Busca siempre la versión más fresca del botón (id contiene 'lnk')
-            def get_btn(d):
-                return d.find_element(By.CSS_SELECTOR, "div.item1 a[id*='lnk']")
+            # 1. Buscamos el botón correcto de forma ESTRICTA y capturamos su ID único
+            btn_inicial = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1 a[id^='lnk']")))
+            target_id = btn_inicial.get_attribute("id")
             
-            # Helper 2: Extrae el texto sucio y lo limpia, resistiendo fallos de carga
+            # Helper 1: A partir de ahora, siempre buscamos a este ID exacto (Anti-Stale y Anti-Errores)
+            def get_btn(d):
+                return d.find_element(By.ID, target_id)
+            
+            # Helper 2: Extraemos el texto
             def get_btn_text(d):
                 try:
                     return get_btn(d).get_attribute("textContent").strip().lower()
@@ -123,26 +127,24 @@ def test_tarifario_ofertas(logged_in_driver):
                     return ""
 
             # Scroll inicial
-            btn_oferta = wait.until(lambda d: get_btn(d))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_oferta)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", get_btn(driver))
             time.sleep(1)
             
             # --- INICIO VALIDACIÓN DOM DINÁMICA ---
-            # 1. Esperamos dinámicamente el estado inicial (Esto previene el error que te dio recién)
             wait.until(lambda d: "ver" in get_btn_text(d), message="El botón inicial no cargó el texto 'ver'")
 
-            # 2. Primer Clic: Abrir
+            # Primer Clic: Abrir
             driver.execute_script("arguments[0].click();", get_btn(driver))
             esperar_fin_de_carga()
             
             wait.until(lambda d: "cerrar" in get_btn_text(d), message="El botón no cambió a 'cerrar'")
 
-            # 3. Segundo Clic: Cerrar
+            # Segundo Clic: Cerrar
             driver.execute_script("arguments[0].click();", get_btn(driver))
             
             wait.until(lambda d: "ver" in get_btn_text(d), message="El botón no volvió a 'ver'")
 
-            # 4. Tercer Clic: Volver a abrir para continuar la prueba
+            # Tercer Clic: Volver a abrir para continuar la prueba
             driver.execute_script("arguments[0].click();", get_btn(driver))
             
             wait.until(lambda d: "cerrar" in get_btn_text(d), message="El botón no se volvió a abrir ('cerrar')")
