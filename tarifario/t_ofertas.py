@@ -75,18 +75,22 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 4 Modal (FIX REAL)
+        # 4 Modal (FIX ANTI-STALE + SELECTOR EXACTO)
         # =========================
         with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
-            btn_detalle = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "//a[contains(., 'Ver detalle')]"
-            )))
+            # XPath robusto usando los atributos exactos que proveíste
+            XPATH_DETALLE = "//a[@href='javascript:void(0);' and contains(@style, 'var(--amv-primary)') and contains(., 'Ver detalle')]"
 
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
+            def get_btn_detalle():
+                return wait.until(EC.presence_of_element_located((By.XPATH, XPATH_DETALLE)))
+
+            # Buscamos y hacemos scroll
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn_detalle())
             time.sleep(1)
 
-            driver.execute_script("arguments[0].click();", btn_detalle)
+            # RE-BUSCAMOS el botón justo en el milisegundo que hacemos clic para evitar StaleElement
+            driver.execute_script("arguments[0].click();", get_btn_detalle())
 
             # Esperar que el modal exista
             modal = wait.until(EC.presence_of_element_located((
@@ -218,5 +222,4 @@ def test_tarifario_ofertas(logged_in_driver):
             name="Fallo_Tarifario_Ofertas",
             attachment_type=allure.attachment_type.PNG
         )
-
         pytest.fail(f"El test falló durante la ejecución: {str(e)}")
