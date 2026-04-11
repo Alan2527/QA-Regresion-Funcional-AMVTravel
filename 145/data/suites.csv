@@ -1,0 +1,69 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
+1. Login y navegación a la solapa Hoteles.
+2. Búsqueda con destino Cachi.
+3. Validación de existencia del tag ""Hotel Recomendado"" (featured-tag).
+4. Validación del modal ""Ver Proveedores"" desde el listado.
+5. Validación del modal ""Ver Detalle"" (link con estilo primario).
+6. Ingreso al detalle del hotel.
+7. Apertura del acordeón de habitación y validación de la tabla de tarifas.
+","29104","test_tarifario_hoteles","tarifario","Sat Apr 11 13:42:41 UTC 2026","failed","Sat Apr 11 13:43:10 UTC 2026","","t_hoteles","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Cena Show:
+1. Login y navegación a la solapa Cena Show.
+2. Búsqueda con destino Cachi.
+3. Validación de Tooltip de Duración.
+4. Validación de Tooltip de Idiomas.
+5. Validación de Tooltip de Operatividad (Días y meses específicos).
+6. Validación del modal ""Ver Proveedores"" desde el listado.
+7. Validación del modal ""Ver Detalle"".
+8. Ingreso al detalle de la cena show y validación de la tabla de tarifas.
+","30073","test_tarifario","tarifario","Sat Apr 11 13:43:54 UTC 2026","failed","Sat Apr 11 13:44:24 UTC 2026","","cenashow","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Traslados:
+1. Login y navegación a la solapa Traslados.
+2. Búsqueda con destino Cachi.
+3. Validación de Tooltip de Duración.
+4. Validación de Tooltip de Idiomas.
+5. Validación de Tooltip de Operatividad (Todos los dias).
+6. Validación del modal ""Ver Proveedores"" desde el listado.
+7. Validación del modal ""Ver Detalle"".
+8. Ingreso al detalle del traslado y validación de la tabla de tarifas.
+","30216","test_tarifario_traslados","tarifario","Sat Apr 11 13:43:17 UTC 2026","failed","Sat Apr 11 13:43:47 UTC 2026","","traslados","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
+1. Login y navegación a Excursiones.
+2. Búsqueda con destino Cachi.
+3. Validación de Tooltip de Duración.
+4. Validación de Tooltip de Idiomas.
+5. Validación de Tooltip de Operatividad.
+6. Validación del modal ""Ver Proveedores"" desde el listado.
+7. Validación del modal ""Ver Detalle"".
+8. Ingreso al detalle de la excursión y validación de la tabla de tarifas.
+","30973","test_tarifario","tarifario","Sat Apr 11 13:42:04 UTC 2026","failed","Sat Apr 11 13:42:34 UTC 2026","","excursiones","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
+1. Login silencioso y navegación a la pestaña Tarifario.
+2. Búsqueda de paquetes con filtros por defecto (Argentina, Buenos Aires).
+3. Validación de estructura de resultados en pantalla.
+4. Ingreso al detalle del paquete (ID lnk2138).
+5. Apertura y validación del acordeón de tours.
+6. Descarga del paquete en formato Word y validación en el sistema de archivos (CI/CD).
+","16453","test_tarifario_paquetes","tarifario","Sat Apr 11 13:41:40 UTC 2026","failed","Sat Apr 11 13:41:57 UTC 2026","","paquetes","",""
+"
+Este caso de prueba cubre el flujo de Tarifario - Cruceros:
+1. Login y navegación a la solapa Cruceros.
+2. Búsqueda con destino Ushuaia.
+3. Validación del modal ""Ver Detalle"".
+4. Ingreso al detalle del crucero (con validación de toggle Ver/Cerrar).
+5. Apertura del acordeón (cabinas/salidas) y validación de la tabla de tarifas.
+","40536","test_tarifario_cruceros","tarifario","Sat Apr 11 13:44:31 UTC 2026","failed","Sat Apr 11 13:45:12 UTC 2026","","cruceros","",""
+"
+Este caso de prueba cubre el flujo de Tarifario - Ofertas:
+1. Login y navegación a la solapa Ofertas.
+2. Búsqueda con destino Buenos Aires.
+3. Validación del modal ""Ver Detalle"".
+4. Ingreso al detalle de la oferta (con validación de toggle Ver/Cerrar).
+5. Apertura del acordeón específico y validación de la tabla de tarifas.
+","16314","test_tarifario_ofertas","tarifario","Sat Apr 11 13:45:19 UTC 2026","failed","Sat Apr 11 13:45:35 UTC 2026","","t_ofertas","",""
