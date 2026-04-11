@@ -107,25 +107,22 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (Usando tu lógica de la tarjeta)
+        # 5 Toggle VALIDACIÓN EXACTA (TU LÓGICA DE TEXTO)
         # =========================
-        with allure.step("5. Validar toggle Ver/Cerrar Tarifario (Método div.item1)"):
+        with allure.step("5. Validar toggle Ver/Cerrar Tarifario leyendo el texto directo"):
 
-            def get_primer_item():
-                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1")))
-
-            def get_texto_tarjeta():
-                return driver.execute_script("return arguments[0].innerText;", get_primer_item())
-
+            # Buscamos globalmente el enlace que tenga la palabra "Tarifario". ¡Es infalible!
             def get_btn_toggle():
-                # Usamos las clases exactas que nos pasaste para apuntar al botón sin fallar
-                return get_primer_item().find_element(By.CSS_SELECTOR, "a.accordeon-header.tariff-detail")
+                return wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(., 'Tarifario')]")))
+
+            def get_texto_boton():
+                return driver.execute_script("return arguments[0].textContent;", get_btn_toggle()).strip()
 
             # -------- ESTADO INICIAL --------
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_primer_item())
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn_toggle())
             time.sleep(1)
 
-            assert "Ver Tarifario" in get_texto_tarjeta(), f"Texto incorrecto en estado inicial: {get_texto_tarjeta()}"
+            assert "Ver Tarifario" in get_texto_boton(), f"Texto incorrecto en estado inicial: {get_texto_boton()}"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -136,10 +133,9 @@ def test_tarifario_ofertas(logged_in_driver):
             # -------- CLICK → CERRAR --------
             driver.execute_script("arguments[0].click();", get_btn_toggle())
 
-            wait.until(lambda d: "Cerrar Tarifario" in get_texto_tarjeta(), message="La tarjeta no cambió a 'Cerrar Tarifario'")
+            wait.until(lambda d: "Cerrar Tarifario" in get_texto_boton(), message="El botón no cambió a 'Cerrar Tarifario'")
             
             # EL FIX: Bootstrap ignora los clics si la animación de apertura no terminó. 
-            # Le damos 2.5 segundos de gracia a GitHub Actions para que el acordeón se despliegue por completo.
             time.sleep(2.5)
 
             allure.attach(
@@ -151,9 +147,8 @@ def test_tarifario_ofertas(logged_in_driver):
             # -------- CLICK → VOLVER A VER --------
             driver.execute_script("arguments[0].click();", get_btn_toggle())
 
-            wait.until(lambda d: "Ver Tarifario" in get_texto_tarjeta(), message="La tarjeta no volvió a 'Ver Tarifario'")
+            wait.until(lambda d: "Ver Tarifario" in get_texto_boton(), message="El botón no volvió a 'Ver Tarifario'")
             
-            # Esperamos que se cierre para la foto final
             time.sleep(1)
 
             allure.attach(
