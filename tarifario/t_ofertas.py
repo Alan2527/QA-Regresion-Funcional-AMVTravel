@@ -68,14 +68,16 @@ def test_tarifario_ofertas(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_buscar)
             esperar_fin_de_carga()
 
-            allure.attach(driver.get_screenshot_as_png(),
-                          name="1_Busqueda",
-                          attachment_type=allure.attachment_type.PNG)
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="1_Busqueda_Ofertas_BUE",
+                attachment_type=allure.attachment_type.PNG
+            )
 
         # =========================
         # 4 Modal
         # =========================
-        with allure.step("4. Validar modal Ver Detalle"):
+        with allure.step("4. Click en botón Ver Detalle y validar modal"):
 
             btn_detalle = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "//a[contains(., 'Ver detalle')]"
@@ -87,65 +89,90 @@ def test_tarifario_ofertas(logged_in_driver):
                 By.CSS_SELECTOR, "div.modal-content"
             )))
 
-            assert modal.is_displayed()
+            assert modal.is_displayed(), "El modal no se mostró"
 
-            allure.attach(driver.get_screenshot_as_png(),
-                          name="2_Modal",
-                          attachment_type=allure.attachment_type.PNG)
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="2_Modal_VerDetalle",
+                attachment_type=allure.attachment_type.PNG
+            )
 
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
 
         # =========================
-        # 5 TOGGLE CORRECTO
+        # 5 Toggle VALIDACIÓN EXACTA (TEXTO + ÍCONO)
         # =========================
         with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
 
-            # -------- CLICK VER --------
-            btn_ver = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "//a[contains(., 'Ver Tarifario')]"
-            )))
+            SELECTOR_BTN = "a.accordeon-header.tariff-detail.tariff-view-table.toggle-asigned"
 
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_ver)
+            def get_btn():
+                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_BTN)))
+
+            def get_text(btn):
+                return btn.text.strip()
+
+            def has_icon(btn, icon_class):
+                try:
+                    btn.find_element(By.CSS_SELECTOR, f"i.{icon_class.replace(' ', '.')}")
+                    return True
+                except:
+                    return False
+
+            # -------- ESTADO INICIAL --------
+            btn = get_btn()
+
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
             time.sleep(1)
 
-            driver.execute_script("arguments[0].click();", btn_ver)
+            assert get_text(btn) == "Ver Tarifario", f"Texto incorrecto: {get_text(btn)}"
+            assert has_icon(btn, "zmdi zmdi-chevron-down"), "Falta ícono flecha abajo"
 
-            # 🔥 CLAVE: esperar que el botón viejo desaparezca
-            wait.until(EC.staleness_of(btn_ver))
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="3_Ver_Tarifario_OK",
+                attachment_type=allure.attachment_type.PNG
+            )
 
+            # -------- CLICK → CERRAR --------
+            driver.execute_script("arguments[0].click();", btn)
+
+            wait.until(EC.staleness_of(btn))
             esperar_fin_de_carga()
 
-            # -------- VALIDAR CERRAR --------
-            btn_cerrar = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "//a[contains(., 'Cerrar Tarifario')]"
-            )))
+            btn = get_btn()
 
-            assert btn_cerrar.is_displayed(), "No apareció 'Cerrar Tarifario'"
+            assert get_text(btn) == "Cerrar Tarifario", f"Texto incorrecto: {get_text(btn)}"
+            assert has_icon(btn, "zmdi zmdi-chevron-up"), "Falta ícono flecha arriba"
 
-            # -------- CLICK CERRAR --------
-            driver.execute_script("arguments[0].click();", btn_cerrar)
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="4_Cerrar_Tarifario_OK",
+                attachment_type=allure.attachment_type.PNG
+            )
 
-            # 🔥 CLAVE: esperar re-render
-            wait.until(EC.staleness_of(btn_cerrar))
+            # -------- CLICK → VOLVER A VER --------
+            driver.execute_script("arguments[0].click();", btn)
 
+            wait.until(EC.staleness_of(btn))
             esperar_fin_de_carga()
 
-            # -------- VALIDAR VER --------
-            btn_ver = wait.until(EC.element_to_be_clickable((
-                By.XPATH, "//a[contains(., 'Ver Tarifario')]"
-            )))
+            btn = get_btn()
 
-            assert btn_ver.is_displayed(), "No volvió 'Ver Tarifario'"
+            assert get_text(btn) == "Ver Tarifario", f"Texto incorrecto: {get_text(btn)}"
+            assert has_icon(btn, "zmdi zmdi-chevron-down"), "No volvió flecha abajo"
 
-            allure.attach(driver.get_screenshot_as_png(),
-                          name="3_Toggle_OK",
-                          attachment_type=allure.attachment_type.PNG)
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="5_Vuelve_Ver_Tarifario_OK",
+                attachment_type=allure.attachment_type.PNG
+            )
 
         # =========================
-        # 6 Acordeón
+        # 6 Acordeón y tabla
         # =========================
-        with allure.step("6. Validar tabla de tarifas"):
+        with allure.step("6. Apertura del acordeón y validación de tarifas"):
 
             btn_acordeon = wait.until(EC.element_to_be_clickable((
                 By.ID, "accordeon-header-bfce9d58-98a4-4fe6-b706-6aa2e6e52730"
@@ -158,20 +185,24 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(2)
 
             tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table-bordered"
+                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
 
             tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
 
-            assert len(tarifas) > 0, "No hay tarifas"
+            assert len(tarifas) > 0, "No hay tarifas en la tabla"
 
-            allure.attach(driver.get_screenshot_as_png(),
-                          name="4_Tarifas",
-                          attachment_type=allure.attachment_type.PNG)
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="6_Detalle_Oferta_Tarifas",
+                attachment_type=allure.attachment_type.PNG
+            )
 
     except Exception as e:
-        allure.attach(driver.get_screenshot_as_png(),
-                      name="ERROR",
-                      attachment_type=allure.attachment_type.PNG)
+        allure.attach(
+            driver.get_screenshot_as_png(),
+            name="Fallo_Tarifario_Ofertas",
+            attachment_type=allure.attachment_type.PNG
+        )
 
-        pytest.fail(f"Error en test: {str(e)}")
+        pytest.fail(f"El test falló durante la ejecución: {str(e)}")
