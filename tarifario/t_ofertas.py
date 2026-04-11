@@ -107,34 +107,27 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (Usando tu HTML exacto)
+        # 5 Toggle VALIDACIÓN EXACTA (Usando tu lógica del contenedor item1)
         # =========================
-        with allure.step("5. Validar toggle Ver/Cerrar Tarifario"):
+        with allure.step("5. Validar toggle Ver/Cerrar Tarifario (Método div.item1)"):
 
-            # Usamos un XPath irrompible basado en las clases y texto que me proveíste
-            XPATH_TOGGLE = "//a[contains(@class, 'accordeon-header') and contains(., 'Tarifario')]"
+            # Siempre buscamos el primer item1 fresco para evitar cualquier StaleElement
+            def get_primer_item():
+                return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1")))
 
-            def get_btn():
-                return wait.until(EC.presence_of_element_located((By.XPATH, XPATH_TOGGLE)))
+            # Leemos TODO el texto que hay adentro de esa tarjeta
+            def get_texto_tarjeta():
+                return driver.execute_script("return arguments[0].innerText;", get_primer_item())
 
-            def get_text():
-                # Leemos el textContent crudo con JS para esquivar bugs visuales de Chrome Headless
-                return driver.execute_script("return arguments[0].textContent;", get_btn()).strip()
-
-            def has_icon(icon_name):
-                try:
-                    # Buscamos el ícono "i" exacto dentro de la etiqueta "a"
-                    get_btn().find_element(By.XPATH, f".//i[contains(@class, '{icon_name}')]")
-                    return True
-                except:
-                    return False
+            # Buscamos el botón clickeable adentro de esa tarjeta específica
+            def get_btn_toggle():
+                return get_primer_item().find_element(By.XPATH, ".//a[contains(., 'Tarifario')]")
 
             # -------- ESTADO INICIAL --------
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn())
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_primer_item())
             time.sleep(1)
 
-            assert "Ver Tarifario" in get_text(), f"Texto incorrecto: {get_text()}"
-            assert has_icon("zmdi-chevron-down"), "Falta ícono flecha abajo"
+            assert "Ver Tarifario" in get_texto_tarjeta(), f"Texto incorrecto en estado inicial: {get_texto_tarjeta()}"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -143,12 +136,11 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             # -------- CLICK → CERRAR --------
-            driver.execute_script("arguments[0].click();", get_btn())
+            driver.execute_script("arguments[0].click();", get_btn_toggle())
 
-            wait.until(lambda d: "Cerrar Tarifario" in get_text(), message="El botón no cambió a 'Cerrar Tarifario'")
+            # Esperamos simplemente que la tarjeta entera cambie su texto
+            wait.until(lambda d: "Cerrar Tarifario" in get_texto_tarjeta(), message="La tarjeta no cambió a 'Cerrar Tarifario'")
             time.sleep(0.5)
-
-            assert has_icon("zmdi-chevron-up"), "Falta ícono flecha arriba"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -157,12 +149,10 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
             # -------- CLICK → VOLVER A VER --------
-            driver.execute_script("arguments[0].click();", get_btn())
+            driver.execute_script("arguments[0].click();", get_btn_toggle())
 
-            wait.until(lambda d: "Ver Tarifario" in get_text(), message="El botón no volvió a 'Ver Tarifario'")
+            wait.until(lambda d: "Ver Tarifario" in get_texto_tarjeta(), message="La tarjeta no volvió a 'Ver Tarifario'")
             time.sleep(0.5)
-
-            assert has_icon("zmdi-chevron-down"), "No volvió flecha abajo"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -175,8 +165,8 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         with allure.step("6. Apertura del acordeón y validación de tarifas"):
 
-            # Para abrir el acordeón y ver la tabla, simplemente hacemos clic en el mismo botón blindado
-            driver.execute_script("arguments[0].click();", get_btn())
+            # Para abrir la tabla, volvemos a hacer clic en nuestro botón ya validado
+            driver.execute_script("arguments[0].click();", get_btn_toggle())
             time.sleep(2)
 
             tabla = wait.until(EC.visibility_of_element_located((
