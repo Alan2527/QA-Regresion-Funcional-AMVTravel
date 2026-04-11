@@ -71,7 +71,9 @@ def test_tarifario_ofertas(logged_in_driver):
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_buscar)
             time.sleep(1)
-            btn_buscar.send_keys(Keys.ENTER)
+            
+            # SOLUCIÓN HEADLESS: Usamos JS Click en lugar de ENTER
+            driver.execute_script("arguments[0].click();", btn_buscar)
 
             esperar_fin_de_carga()
 
@@ -116,35 +118,35 @@ def test_tarifario_ofertas(logged_in_driver):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_oferta)
             time.sleep(1)
             
-            # --- INICIO NUEVA VALIDACIÓN: TOGGLE BOTÓN VER/CERRAR TARIFARIO ---
-            texto_inicial = btn_oferta.text.strip().lower()
-            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'Ver...'"
+            # --- INICIO NUEVA VALIDACIÓN (SOLUCIÓN HEADLESS TEXTCONTENT) ---
+            texto_inicial = btn_oferta.get_attribute("textContent").strip().lower()
+            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de contener 'ver'"
 
             # Primer Clic: Abrir
             driver.execute_script("arguments[0].click();", btn_oferta)
             esperar_fin_de_carga()
             
-            # Espera dinámica: aguanta hasta que el texto del botón cambie (max 15s por el WebDriverWait global)
-            wait.until(lambda d: "cerrar" in btn_oferta.text.strip().lower())
-            time.sleep(1) # Pausa extra por estabilidad de renderizado
+            # Espera dinámica: aguanta hasta que el textContent del botón cambie
+            wait.until(lambda d: "cerrar" in btn_oferta.get_attribute("textContent").strip().lower())
+            time.sleep(1)
 
-            texto_abierto = btn_oferta.text.strip().lower()
-            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'Cerrar...', dice '{texto_abierto}'"
+            texto_abierto = btn_oferta.get_attribute("textContent").strip().lower()
+            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'cerrar', dice '{texto_abierto}'"
 
             # Segundo Clic: Cerrar
             driver.execute_script("arguments[0].click();", btn_oferta)
             
             # Espera dinámica: aguanta hasta que vuelva a decir 'ver'
-            wait.until(lambda d: "ver" in btn_oferta.text.strip().lower())
+            wait.until(lambda d: "ver" in btn_oferta.get_attribute("textContent").strip().lower())
             time.sleep(1)
 
-            texto_cerrado = btn_oferta.text.strip().lower()
-            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'Ver...', quedó en '{texto_cerrado}'"
+            texto_cerrado = btn_oferta.get_attribute("textContent").strip().lower()
+            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'ver', quedó en '{texto_cerrado}'"
 
             # Tercer Clic: Volver a abrir para continuar la prueba
             driver.execute_script("arguments[0].click();", btn_oferta)
             esperar_fin_de_carga()
-            wait.until(lambda d: "cerrar" in btn_oferta.text.strip().lower())
+            wait.until(lambda d: "cerrar" in btn_oferta.get_attribute("textContent").strip().lower())
             time.sleep(1)
             # --- FIN NUEVA VALIDACIÓN ---
 
