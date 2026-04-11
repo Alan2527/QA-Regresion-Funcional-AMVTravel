@@ -107,21 +107,19 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (Usando tu lógica del contenedor item1)
+        # 5 Toggle VALIDACIÓN EXACTA (Usando tu lógica de la tarjeta)
         # =========================
         with allure.step("5. Validar toggle Ver/Cerrar Tarifario (Método div.item1)"):
 
-            # Siempre buscamos el primer item1 fresco para evitar cualquier StaleElement
             def get_primer_item():
                 return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.item1")))
 
-            # Leemos TODO el texto que hay adentro de esa tarjeta
             def get_texto_tarjeta():
                 return driver.execute_script("return arguments[0].innerText;", get_primer_item())
 
-            # Buscamos el botón clickeable adentro de esa tarjeta específica
             def get_btn_toggle():
-                return get_primer_item().find_element(By.XPATH, ".//a[contains(., 'Tarifario')]")
+                # Usamos las clases exactas que nos pasaste para apuntar al botón sin fallar
+                return get_primer_item().find_element(By.CSS_SELECTOR, "a.accordeon-header.tariff-detail")
 
             # -------- ESTADO INICIAL --------
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_primer_item())
@@ -138,9 +136,11 @@ def test_tarifario_ofertas(logged_in_driver):
             # -------- CLICK → CERRAR --------
             driver.execute_script("arguments[0].click();", get_btn_toggle())
 
-            # Esperamos simplemente que la tarjeta entera cambie su texto
             wait.until(lambda d: "Cerrar Tarifario" in get_texto_tarjeta(), message="La tarjeta no cambió a 'Cerrar Tarifario'")
-            time.sleep(0.5)
+            
+            # EL FIX: Bootstrap ignora los clics si la animación de apertura no terminó. 
+            # Le damos 2.5 segundos de gracia a GitHub Actions para que el acordeón se despliegue por completo.
+            time.sleep(2.5)
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -152,7 +152,9 @@ def test_tarifario_ofertas(logged_in_driver):
             driver.execute_script("arguments[0].click();", get_btn_toggle())
 
             wait.until(lambda d: "Ver Tarifario" in get_texto_tarjeta(), message="La tarjeta no volvió a 'Ver Tarifario'")
-            time.sleep(0.5)
+            
+            # Esperamos que se cierre para la foto final
+            time.sleep(1)
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -165,7 +167,7 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         with allure.step("6. Apertura del acordeón y validación de tarifas"):
 
-            # Para abrir la tabla, volvemos a hacer clic en nuestro botón ya validado
+            # Para abrir la tabla y continuar, volvemos a hacer clic
             driver.execute_script("arguments[0].click();", get_btn_toggle())
             time.sleep(2)
 
