@@ -1,0 +1,2 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","34898","test_tarifario_ofertas","tarifario","Sun Apr 12 01:32:22 UTC 2026","failed","Sun Apr 12 01:32:57 UTC 2026","","t_ofertas","",""
