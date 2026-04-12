@@ -107,63 +107,91 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # 5 Toggle VALIDACIÓN EXACTA (TU LÓGICA DE TEXTO)
+        # HELPERS PARA EL PASO 5 DIVIDIDO
         # =========================
-        with allure.step("5. Validar toggle Ver/Cerrar Tarifario leyendo el texto directo"):
+        SELECTOR_EXACTO = "a.accordeon-header.tariff-detail.tariff-view-table.toggle-asigned"
+        
+        def get_boton_dinamico():
+            return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_EXACTO)))
+            
+        def get_texto_boton():
+            return driver.execute_script("return arguments[0].textContent;", get_boton_dinamico()).strip()
+            
+        def check_icono(clase_icono):
+            try:
+                # Reemplazamos los espacios por puntos para el selector CSS (ej: "zmdi.zmdi-chevron-down")
+                clase_css = clase_icono.replace(" ", ".")
+                get_boton_dinamico().find_element(By.CSS_SELECTOR, f"i.{clase_css}")
+                return True
+            except:
+                return False
 
-            # Buscamos globalmente el enlace que tenga la palabra "Tarifario". ¡Es infalible!
-            def get_btn_toggle():
-                return wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(., 'Tarifario')]")))
-
-            def get_texto_boton():
-                return driver.execute_script("return arguments[0].textContent;", get_btn_toggle()).strip()
-
-            # -------- ESTADO INICIAL --------
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_btn_toggle())
+        # =========================
+        # 5.1 Validar estado inicial Ver Tarifario
+        # =========================
+        with allure.step("5.1. Validar que el botón tenga el texto 'Ver Tarifario' y la flecha hacia abajo"):
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_boton_dinamico())
             time.sleep(1)
 
-            assert "Ver Tarifario" in get_texto_boton(), f"Texto incorrecto en estado inicial: {get_texto_boton()}"
+            assert "Ver Tarifario" in get_texto_boton(), f"Texto inicial incorrecto: {get_texto_boton()}"
+            assert check_icono("zmdi zmdi-chevron-down"), "Falta el ícono de flecha hacia abajo (zmdi-chevron-down) en el estado inicial"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="3_Ver_Tarifario_OK",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-            # -------- CLICK → CERRAR --------
-            driver.execute_script("arguments[0].click();", get_btn_toggle())
-
-            wait.until(lambda d: "Cerrar Tarifario" in get_texto_boton(), message="El botón no cambió a 'Cerrar Tarifario'")
-            
-            # EL FIX: Bootstrap ignora los clics si la animación de apertura no terminó. 
-            time.sleep(2.5)
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="4_Cerrar_Tarifario_OK",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-            # -------- CLICK → VOLVER A VER --------
-            driver.execute_script("arguments[0].click();", get_btn_toggle())
-
-            wait.until(lambda d: "Ver Tarifario" in get_texto_boton(), message="El botón no volvió a 'Ver Tarifario'")
-            
-            time.sleep(1)
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="5_Vuelve_Ver_Tarifario_OK",
+                name="3_Estado_Inicial_Ver_Tarifario",
                 attachment_type=allure.attachment_type.PNG
             )
 
         # =========================
-        # 6 Acordeón
+        # 5.2 Primer Click
         # =========================
-        with allure.step("6. Apertura del acordeón y validación de tarifas"):
+        with allure.step("5.2. Clickear en el botón Ver Tarifario"):
+            driver.execute_script("arguments[0].click();", get_boton_dinamico())
+            time.sleep(2)  # Pausa para que el DOM cambie y la animación se ejecute
 
-            # Para abrir la tabla y continuar, volvemos a hacer clic
-            driver.execute_script("arguments[0].click();", get_btn_toggle())
+        # =========================
+        # 5.3 Validar estado Cerrar Tarifario
+        # =========================
+        with allure.step("5.3. Validar que el botón tenga el texto 'Cerrar Tarifario' y la flecha hacia arriba"):
+            wait.until(lambda d: "Cerrar Tarifario" in get_texto_boton(), message="El texto nunca cambió a 'Cerrar Tarifario'")
+            
+            assert "Cerrar Tarifario" in get_texto_boton(), f"Texto luego del 1er click incorrecto: {get_texto_boton()}"
+            assert check_icono("zmdi zmdi-chevron-up"), "Falta el ícono de flecha hacia arriba (zmdi-chevron-up) al cerrar"
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="4_Estado_Cerrar_Tarifario",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+        # =========================
+        # 5.4 Segundo Click
+        # =========================
+        with allure.step("5.4. Clickear en el botón Cerrar Tarifario"):
+            driver.execute_script("arguments[0].click();", get_boton_dinamico())
+            time.sleep(2)  # Pausa para que el acordeón se cierre y el DOM se restablezca
+
+        # =========================
+        # 5.5 Validar estado Ver Tarifario nuevamente
+        # =========================
+        with allure.step("5.5. Validar que el botón tenga el texto 'Ver Tarifario' nuevamente y la flecha hacia abajo"):
+            wait.until(lambda d: "Ver Tarifario" in get_texto_boton(), message="El texto nunca volvió a 'Ver Tarifario'")
+            
+            assert "Ver Tarifario" in get_texto_boton(), f"Texto luego del 2do click incorrecto: {get_texto_boton()}"
+            assert check_icono("zmdi zmdi-chevron-down"), "Falta el ícono de flecha hacia abajo (zmdi-chevron-down) al volver al estado original"
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="5_Vuelve_Estado_Inicial",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+        # =========================
+        # 6 Acordeón y Tabla (Para cerrar el test y validar contenido)
+        # =========================
+        with allure.step("6. Validar apertura final y tabla de tarifas"):
+            # Lo abrimos una última vez para validar que la tabla de tarifas exista
+            driver.execute_script("arguments[0].click();", get_boton_dinamico())
             time.sleep(2)
 
             tabla = wait.until(EC.visibility_of_element_located((
@@ -171,7 +199,6 @@ def test_tarifario_ofertas(logged_in_driver):
             )))
 
             tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-
             assert len(tarifas) > 0, "No hay tarifas en la tabla"
 
             allure.attach(
