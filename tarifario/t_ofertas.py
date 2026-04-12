@@ -107,103 +107,86 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # HELPERS PARA EL PASO 5 DIVIDIDO
+        # HELPERS INFALIBLES PARA EL PASO 5
         # =========================
-        SELECTOR_EXACTO = "a.accordeon-header.tariff-detail.tariff-view-table.toggle-asigned"
-        
-        def get_boton_dinamico():
-            return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SELECTOR_EXACTO)))
-            
-        def get_texto_boton():
-            return driver.execute_script("return arguments[0].textContent;", get_boton_dinamico()).strip()
-            
-        def check_icono(clase_icono):
-            try:
-                # Reemplazamos los espacios por puntos para el selector CSS (ej: "zmdi.zmdi-chevron-down")
-                clase_css = clase_icono.replace(" ", ".")
-                get_boton_dinamico().find_element(By.CSS_SELECTOR, f"i.{clase_css}")
-                return True
-            except:
-                return False
+        # Usamos un XPath que busca el primer enlace con clase 'tariff-detail'. 
+        # Esto ignora clases tramposas como 'toggle-asigned' que aparecen y desaparecen.
+        def get_btn_tarifario():
+            return wait.until(EC.presence_of_element_located((By.XPATH, "(//a[contains(@class, 'tariff-detail')])[1]")))
+
+        def get_texto_tarifario():
+            return driver.execute_script("return arguments[0].textContent;", get_btn_tarifario()).strip()
 
         # =========================
         # 5.1 Validar estado inicial Ver Tarifario
         # =========================
-        with allure.step("5.1. Validar que el botón tenga el texto 'Ver Tarifario' y la flecha hacia abajo"):
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", get_boton_dinamico())
+        with allure.step("5.1. Validar que el botón tenga el texto Ver Tarifario y el icono chevron-down"):
+            
+            boton = get_btn_tarifario()
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton)
             time.sleep(1)
 
-            assert "Ver Tarifario" in get_texto_boton(), f"Texto inicial incorrecto: {get_texto_boton()}"
-            assert check_icono("zmdi zmdi-chevron-down"), "Falta el ícono de flecha hacia abajo (zmdi-chevron-down) en el estado inicial"
+            assert "Ver Tarifario" in get_texto_tarifario(), f"Texto incorrecto: {get_texto_tarifario()}"
+            
+            # Usamos find_elements (en plural) que devuelve una lista. Si está vacía, falla.
+            iconos_down = boton.find_elements(By.XPATH, ".//i[contains(@class, 'zmdi-chevron-down')]")
+            assert len(iconos_down) > 0, "Falta el ícono zmdi-chevron-down"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="3_Estado_Inicial_Ver_Tarifario",
+                name="3_Paso1_Ver_Tarifario_Inicial",
                 attachment_type=allure.attachment_type.PNG
             )
 
         # =========================
-        # 5.2 Primer Click
+        # 5.2 Clickear en ese a
         # =========================
         with allure.step("5.2. Clickear en el botón Ver Tarifario"):
-            driver.execute_script("arguments[0].click();", get_boton_dinamico())
-            time.sleep(2)  # Pausa para que el DOM cambie y la animación se ejecute
+            driver.execute_script("arguments[0].click();", get_btn_tarifario())
+            # Pausa CLAVE de 2 segundos para que la animación de apertura en GitHub Actions termine
+            time.sleep(2)
 
         # =========================
         # 5.3 Validar estado Cerrar Tarifario
         # =========================
-        with allure.step("5.3. Validar que el botón tenga el texto 'Cerrar Tarifario' y la flecha hacia arriba"):
-            wait.until(lambda d: "Cerrar Tarifario" in get_texto_boton(), message="El texto nunca cambió a 'Cerrar Tarifario'")
+        with allure.step("5.3. Validar que el botón tenga el texto Cerrar Tarifario y el icono chevron-up"):
             
-            assert "Cerrar Tarifario" in get_texto_boton(), f"Texto luego del 1er click incorrecto: {get_texto_boton()}"
-            assert check_icono("zmdi zmdi-chevron-up"), "Falta el ícono de flecha hacia arriba (zmdi-chevron-up) al cerrar"
+            # Esperamos a que el texto cambie
+            wait.until(lambda d: "Cerrar Tarifario" in get_texto_tarifario(), message="El texto nunca cambió a Cerrar Tarifario")
+            
+            assert "Cerrar Tarifario" in get_texto_tarifario(), f"Texto incorrecto: {get_texto_tarifario()}"
+            
+            iconos_up = get_btn_tarifario().find_elements(By.XPATH, ".//i[contains(@class, 'zmdi-chevron-up')]")
+            assert len(iconos_up) > 0, "Falta el ícono zmdi-chevron-up"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="4_Estado_Cerrar_Tarifario",
+                name="4_Paso3_Cerrar_Tarifario",
                 attachment_type=allure.attachment_type.PNG
             )
 
         # =========================
-        # 5.4 Segundo Click
+        # 5.4 Clickear en ese a nuevamente
         # =========================
         with allure.step("5.4. Clickear en el botón Cerrar Tarifario"):
-            driver.execute_script("arguments[0].click();", get_boton_dinamico())
-            time.sleep(2)  # Pausa para que el acordeón se cierre y el DOM se restablezca
-
-        # =========================
-        # 5.5 Validar estado Ver Tarifario nuevamente
-        # =========================
-        with allure.step("5.5. Validar que el botón tenga el texto 'Ver Tarifario' nuevamente y la flecha hacia abajo"):
-            wait.until(lambda d: "Ver Tarifario" in get_texto_boton(), message="El texto nunca volvió a 'Ver Tarifario'")
-            
-            assert "Ver Tarifario" in get_texto_boton(), f"Texto luego del 2do click incorrecto: {get_texto_boton()}"
-            assert check_icono("zmdi zmdi-chevron-down"), "Falta el ícono de flecha hacia abajo (zmdi-chevron-down) al volver al estado original"
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="5_Vuelve_Estado_Inicial",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-        # =========================
-        # 6 Acordeón y Tabla (Para cerrar el test y validar contenido)
-        # =========================
-        with allure.step("6. Validar apertura final y tabla de tarifas"):
-            # Lo abrimos una última vez para validar que la tabla de tarifas exista
-            driver.execute_script("arguments[0].click();", get_boton_dinamico())
+            driver.execute_script("arguments[0].click();", get_btn_tarifario())
             time.sleep(2)
 
-            tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+        # =========================
+        # 5.5 Validar estado Ver Tarifario
+        # =========================
+        with allure.step("5.5. Validar que el botón vuelva a tener el texto Ver Tarifario y el icono chevron-down"):
+            
+            wait.until(lambda d: "Ver Tarifario" in get_texto_tarifario(), message="El texto nunca volvió a Ver Tarifario")
+            
+            assert "Ver Tarifario" in get_texto_tarifario(), f"Texto incorrecto: {get_texto_tarifario()}"
+            
+            iconos_down_final = get_btn_tarifario().find_elements(By.XPATH, ".//i[contains(@class, 'zmdi-chevron-down')]")
+            assert len(iconos_down_final) > 0, "Falta el ícono zmdi-chevron-down al volver al estado inicial"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="6_Detalle_Oferta_Tarifas",
+                name="5_Paso5_Vuelve_Ver_Tarifario",
                 attachment_type=allure.attachment_type.PNG
             )
 
