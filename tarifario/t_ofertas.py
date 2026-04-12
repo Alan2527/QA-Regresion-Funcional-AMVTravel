@@ -107,42 +107,45 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(1)
 
         # =========================
-        # HELPERS INFALIBLES PARA EL PASO 5 (CON LA FRASE EXACTA)
+        # HELPERS DE BÚSQUEDA INDEPENDIENTE
         # =========================
-        def get_btn_tarifario():
-            # Busca ESTRICTAMENTE la frase "ver tarifario" o "cerrar tarifario". 
-            # Ignora cualquier otro enlace que solo diga "tarifario".
-            btn = wait.until(lambda d: d.execute_script("""
+        def buscar_boton_ver():
+            return wait.until(lambda d: d.execute_script("""
                 var links = document.querySelectorAll('a');
                 for (var i=0; i<links.length; i++) {
                     var text = (links[i].textContent || links[i].innerText || "").toLowerCase();
-                    if (text.includes('ver tarifario') || text.includes('cerrar tarifario')) {
+                    if (text.includes('ver tarifario')) {
                         return links[i];
                     }
                 }
                 return null;
-            """), message="No se encontró ningún botón que diga EXACTAMENTE 'Ver Tarifario' o 'Cerrar Tarifario'.")
-            return btn
+            """), message="No se encontró el botón 'Ver Tarifario'.")
 
-        def get_texto_tarifario():
-            return driver.execute_script("return (arguments[0].textContent || arguments[0].innerText).trim();", get_btn_tarifario())
-        
-        def check_icono(direccion):
-            # direccion debe ser "down" o "up"
-            return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", get_btn_tarifario())
+        def buscar_boton_cerrar():
+            return wait.until(lambda d: d.execute_script("""
+                var links = document.querySelectorAll('a');
+                for (var i=0; i<links.length; i++) {
+                    var text = (links[i].textContent || links[i].innerText || "").toLowerCase();
+                    if (text.includes('cerrar tarifario')) {
+                        return links[i];
+                    }
+                }
+                return null;
+            """), message="No se encontró el botón 'Cerrar Tarifario'.")
+            
+        def check_icono(elemento, direccion):
+            return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", elemento)
 
         # =========================
         # 5.1 Validar estado inicial Ver Tarifario
         # =========================
         with allure.step("5.1. Validar que el botón tenga el texto Ver Tarifario y el icono chevron-down"):
 
-            boton = get_btn_tarifario()
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton)
+            boton_ver_inicial = buscar_boton_ver()
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_ver_inicial)
             time.sleep(1)
 
-            texto_actual = get_texto_tarifario()
-            assert "ver tarifario" in texto_actual.lower(), f"Texto incorrecto: {texto_actual}"
-            assert check_icono("down"), "Falta el ícono de flecha hacia abajo (chevron-down) en el estado inicial"
+            assert check_icono(boton_ver_inicial, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -151,23 +154,21 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 5.2 Clickear en ese a
+        # 5.2 Clickear en Ver Tarifario
         # =========================
         with allure.step("5.2. Clickear en el botón Ver Tarifario"):
-            driver.execute_script("arguments[0].click();", get_btn_tarifario())
-            # Pausa para que la animación de apertura de la web se complete
-            time.sleep(2)
+            driver.execute_script("arguments[0].click();", boton_ver_inicial)
+            time.sleep(2.5) # Pausa crucial para que se destruya el botón viejo y nazca el nuevo
 
         # =========================
-        # 5.3 Validar estado Cerrar Tarifario
+        # 5.3 Validar estado Cerrar Tarifario (NUEVA BÚSQUEDA)
         # =========================
-        with allure.step("5.3. Validar que el botón tenga el texto Cerrar Tarifario y el icono chevron-up"):
-
-            wait.until(lambda d: "cerrar tarifario" in get_texto_tarifario().lower(), message="El texto nunca cambió a Cerrar Tarifario")
+        with allure.step("5.3. Buscar el nuevo botón y validar que diga Cerrar Tarifario con icono chevron-up"):
             
-            texto_actual = get_texto_tarifario()
-            assert "cerrar tarifario" in texto_actual.lower(), f"Texto incorrecto: {texto_actual}"
-            assert check_icono("up"), "Falta el ícono de flecha hacia arriba (chevron-up)"
+            # Hacemos un escaneo total nuevo buscando "Cerrar Tarifario"
+            boton_cerrar = buscar_boton_cerrar()
+            
+            assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -176,23 +177,21 @@ def test_tarifario_ofertas(logged_in_driver):
             )
 
         # =========================
-        # 5.4 Clickear en ese a nuevamente
+        # 5.4 Clickear en Cerrar Tarifario
         # =========================
         with allure.step("5.4. Clickear en el botón Cerrar Tarifario"):
-            driver.execute_script("arguments[0].click();", get_btn_tarifario())
-            # Pausa para que el acordeón se cierre visualmente
-            time.sleep(2)
+            driver.execute_script("arguments[0].click();", boton_cerrar)
+            time.sleep(2.5)
 
         # =========================
-        # 5.5 Validar estado Ver Tarifario
+        # 5.5 Validar estado Ver Tarifario nuevamente (NUEVA BÚSQUEDA)
         # =========================
-        with allure.step("5.5. Validar que el botón vuelva a tener el texto Ver Tarifario y el icono chevron-down"):
+        with allure.step("5.5. Buscar nuevamente el botón y validar que diga Ver Tarifario"):
 
-            wait.until(lambda d: "ver tarifario" in get_texto_tarifario().lower(), message="El texto nunca volvió a Ver Tarifario")
+            # Hacemos un escaneo total nuevo buscando "Ver Tarifario"
+            boton_ver_final = buscar_boton_ver()
             
-            texto_actual = get_texto_tarifario()
-            assert "ver tarifario" in texto_actual.lower(), f"Texto incorrecto: {texto_actual}"
-            assert check_icono("down"), "Falta el ícono de flecha hacia abajo al volver al estado original"
+            assert check_icono(boton_ver_final, "down"), "Falta el ícono de flecha hacia abajo al volver"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
@@ -204,8 +203,8 @@ def test_tarifario_ofertas(logged_in_driver):
         # 6 Acordeón y Tabla
         # =========================
         with allure.step("6. Validar apertura final y tabla de tarifas"):
-            # Lo abrimos una última vez para validar que la tabla de tarifas exista
-            driver.execute_script("arguments[0].click();", get_btn_tarifario())
+            # Usamos el último botón que encontramos para abrirlo
+            driver.execute_script("arguments[0].click();", boton_ver_final)
             time.sleep(2)
 
             tabla = wait.until(EC.visibility_of_element_located((
