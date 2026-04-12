@@ -149,7 +149,7 @@ def test_tarifario_ofertas(logged_in_driver):
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="3_Paso1_Ver_Tarifario_Inicial",
+                name="3_Estado_Inicial_Ver_Tarifario",
                 attachment_type=allure.attachment_type.PNG
             )
 
@@ -161,16 +161,26 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(2.5) 
 
         # =========================
-        # 5.3 Validar estado Cerrar Tarifario
+        # 5.3 Validar estado Cerrar Tarifario Y LA TABLA
         # =========================
-        with allure.step("5.3. Buscar el nuevo botón y validar que diga Cerrar Tarifario con icono chevron-up"):
+        with allure.step("5.3. Validar botón Cerrar Tarifario y visualización de la tabla de tarifas"):
             
+            # 1. Validamos que el botón ahora diga "Cerrar" y tenga la flecha arriba
             boton_cerrar = buscar_boton_cerrar()
             assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
+            # 2. Como ya está abierto, validamos la tabla inmediatamente
+            tabla = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
+            )))
+
+            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
+            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+
+            # Sacamos una foto hermosa con el botón Cerrar y la tabla abierta
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="4_Paso3_Cerrar_Tarifario",
+                name="4_Tarifario_Abierto_Con_Tabla",
                 attachment_type=allure.attachment_type.PNG
             )
 
@@ -184,66 +194,14 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         # 5.5 Validar estado Ver Tarifario nuevamente
         # =========================
-        with allure.step("5.5. Buscar nuevamente el botón y validar que diga Ver Tarifario"):
+        with allure.step("5.5. Buscar nuevamente el botón y validar que haya vuelto a Ver Tarifario"):
 
             boton_ver_final = buscar_boton_ver()
             assert check_icono(boton_ver_final, "down"), "Falta el ícono de flecha hacia abajo al volver"
 
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="5_Paso5_Vuelve_Ver_Tarifario",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-        # =========================
-        # 6 Acordeón y Tabla
-        # =========================
-        with allure.step("6. Validar apertura final y tabla de tarifas"):
-            
-            boton_para_abrir = buscar_boton_ver()
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_para_abrir)
-            time.sleep(1)
-            
-            driver.execute_script("arguments[0].click();", boton_para_abrir)
-            
-            # Garantía: Esperamos a que aparezca "Cerrar Tarifario" para confirmar que se abrió
-            buscar_boton_cerrar()
-            time.sleep(1) 
-
-            tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="6_Detalle_Oferta_Tarifas",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-        # =========================
-        # 7 Cerrar Tarifario Final
-        # =========================
-        with allure.step("7. Cerrar el acordeón tras leer la tabla y validar estado final"):
-            
-            # 1. Ya sabemos que está abierto, así que buscamos el botón "Cerrar" fresco
-            boton_para_cerrar_final = buscar_boton_cerrar()
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_para_cerrar_final)
-            time.sleep(1)
-            
-            # 2. Le hacemos clic
-            driver.execute_script("arguments[0].click();", boton_para_cerrar_final)
-            time.sleep(2.5) # Esperamos que termine de cerrarse
-            
-            # 3. Buscamos el botón de "Ver" para confirmar que volvió a la normalidad
-            boton_ver_finalisimo = buscar_boton_ver()
-            assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="7_Cierre_Final_OK",
+                name="5_Vuelve_Ver_Tarifario",
                 attachment_type=allure.attachment_type.PNG
             )
 
