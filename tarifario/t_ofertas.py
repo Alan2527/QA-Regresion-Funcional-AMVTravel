@@ -158,16 +158,14 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         with allure.step("5.2. Clickear en el botón Ver Tarifario"):
             driver.execute_script("arguments[0].click();", boton_ver_inicial)
-            time.sleep(2.5) # Pausa crucial para que se destruya el botón viejo y nazca el nuevo
+            time.sleep(2.5) 
 
         # =========================
-        # 5.3 Validar estado Cerrar Tarifario (NUEVA BÚSQUEDA)
+        # 5.3 Validar estado Cerrar Tarifario
         # =========================
         with allure.step("5.3. Buscar el nuevo botón y validar que diga Cerrar Tarifario con icono chevron-up"):
             
-            # Hacemos un escaneo total nuevo buscando "Cerrar Tarifario"
             boton_cerrar = buscar_boton_cerrar()
-            
             assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
             allure.attach(
@@ -184,13 +182,11 @@ def test_tarifario_ofertas(logged_in_driver):
             time.sleep(2.5)
 
         # =========================
-        # 5.5 Validar estado Ver Tarifario nuevamente (NUEVA BÚSQUEDA)
+        # 5.5 Validar estado Ver Tarifario nuevamente
         # =========================
         with allure.step("5.5. Buscar nuevamente el botón y validar que diga Ver Tarifario"):
 
-            # Hacemos un escaneo total nuevo buscando "Ver Tarifario"
             boton_ver_final = buscar_boton_ver()
-            
             assert check_icono(boton_ver_final, "down"), "Falta el ícono de flecha hacia abajo al volver"
 
             allure.attach(
@@ -203,9 +199,16 @@ def test_tarifario_ofertas(logged_in_driver):
         # 6 Acordeón y Tabla
         # =========================
         with allure.step("6. Validar apertura final y tabla de tarifas"):
-            # Usamos el último botón que encontramos para abrirlo
-            driver.execute_script("arguments[0].click();", boton_ver_final)
-            time.sleep(2)
+            
+            boton_para_abrir = buscar_boton_ver()
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_para_abrir)
+            time.sleep(1)
+            
+            driver.execute_script("arguments[0].click();", boton_para_abrir)
+            
+            # Garantía: Esperamos a que aparezca "Cerrar Tarifario" para confirmar que se abrió
+            buscar_boton_cerrar()
+            time.sleep(1) 
 
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
@@ -217,6 +220,30 @@ def test_tarifario_ofertas(logged_in_driver):
             allure.attach(
                 driver.get_screenshot_as_png(),
                 name="6_Detalle_Oferta_Tarifas",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+        # =========================
+        # 7 Cerrar Tarifario Final
+        # =========================
+        with allure.step("7. Cerrar el acordeón tras leer la tabla y validar estado final"):
+            
+            # 1. Ya sabemos que está abierto, así que buscamos el botón "Cerrar" fresco
+            boton_para_cerrar_final = buscar_boton_cerrar()
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_para_cerrar_final)
+            time.sleep(1)
+            
+            # 2. Le hacemos clic
+            driver.execute_script("arguments[0].click();", boton_para_cerrar_final)
+            time.sleep(2.5) # Esperamos que termine de cerrarse
+            
+            # 3. Buscamos el botón de "Ver" para confirmar que volvió a la normalidad
+            boton_ver_finalisimo = buscar_boton_ver()
+            assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="7_Cierre_Final_OK",
                 attachment_type=allure.attachment_type.PNG
             )
 
