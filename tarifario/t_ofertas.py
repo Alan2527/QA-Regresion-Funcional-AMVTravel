@@ -156,20 +156,36 @@ def test_tarifario_ofertas(logged_in_driver):
         # =========================
         # 5.2 Clickear en Ver Tarifario
         # =========================
-        with allure.step("5.2. Clickear en el botón Ver Tarifario"):
+        with allure.step("5.2. Clickear en el botón Ver Tarifario para abrir panel principal"):
             driver.execute_script("arguments[0].click();", boton_ver_inicial)
             time.sleep(2.5) 
 
         # =========================
-        # 5.3 Validar estado Cerrar Tarifario Y LA TABLA
+        # 5.3 Validar estado Cerrar Tarifario Y ABRIR SUB-ACORDEÓN
         # =========================
-        with allure.step("5.3. Validar botón Cerrar Tarifario y visualización de la tabla de tarifas"):
+        with allure.step("5.3. Validar botón Cerrar Tarifario, abrir sub-grupo y leer la tabla"):
             
-            # 1. Validamos que el botón ahora diga "Cerrar" y tenga la flecha arriba
+            # 1. Validamos que el botón principal ahora diga "Cerrar" y tenga la flecha arriba
             boton_cerrar = buscar_boton_cerrar()
             assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            # 2. Como ya está abierto, validamos la tabla inmediatamente
+            # 2. NUEVO: Buscamos el sub-acordeón (Ej: grupo de tours) usando su clase base infalible
+            # Usamos find_elements por si hay varios grupos y hacemos clic en el primero disponible
+            sub_grupos = wait.until(EC.presence_of_all_elements_located((
+                By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-name"
+            )))
+            
+            assert len(sub_grupos) > 0, "No se encontraron sub-grupos de tarifas para expandir."
+            
+            primer_sub_grupo = sub_grupos[0]
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", primer_sub_grupo)
+            time.sleep(1)
+            
+            # Hacemos clic en el sub-grupo para desplegar la tabla real
+            driver.execute_script("arguments[0].click();", primer_sub_grupo)
+            time.sleep(2) # Pausa para que la animación de la tablita termine de bajar
+
+            # 3. AHORA SÍ, leemos la tabla que ya está visible
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
@@ -177,17 +193,17 @@ def test_tarifario_ofertas(logged_in_driver):
             tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
             assert len(tarifas) > 0, "No hay tarifas en la tabla"
 
-            # Sacamos una foto hermosa con el botón Cerrar y la tabla abierta
+            # Sacamos la foto de victoria con todo desplegado
             allure.attach(
                 driver.get_screenshot_as_png(),
-                name="4_Tarifario_Abierto_Con_Tabla",
+                name="4_Tarifario_Y_SubGrupo_Abierto_Con_Tabla",
                 attachment_type=allure.attachment_type.PNG
             )
 
         # =========================
         # 5.4 Clickear en Cerrar Tarifario
         # =========================
-        with allure.step("5.4. Clickear en el botón Cerrar Tarifario"):
+        with allure.step("5.4. Clickear en el botón Cerrar Tarifario (Cierra todo el bloque)"):
             driver.execute_script("arguments[0].click();", boton_cerrar)
             time.sleep(2.5)
 
