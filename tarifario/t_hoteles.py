@@ -244,7 +244,7 @@ def test_tarifario_hoteles(logged_in_driver):
         # =========================
         with allure.step("11. Click en botón Ver Detalle y validar apertura de modal de detalle"):
             btn_detalle = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "a.tariff-op-detail-btn"
+                By.CSS_XPATH, "//*[@id='detail']/div/p/a"
             )))
             
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
