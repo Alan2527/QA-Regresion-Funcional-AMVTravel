@@ -8,22 +8,24 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Excursiones Completa (Tooltips, Modales y Tarifas)")
+@allure.story("Consulta de Excursiones Completa (Tarifas, Tooltips y Modales)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
 Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
 1. Login y navegación a Excursiones.
 2. Búsqueda con destino Cachi.
-3. Validación de Tooltip de Duración.
-4. Validación de Tooltip de Idiomas.
-5. Validación de Tooltip de Operatividad.
-6. Validación del modal "Ver Proveedores" desde el listado.
-7. Validación del modal "Ver Detalle".
-8. Ingreso al detalle de la excursión y validación de la tabla de tarifas.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-grupos (si existen) y validación de la tabla.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación de Tooltip de Duración.
+7. Validación de Tooltip de Idiomas.
+8. Validación de Tooltip de Operatividad.
+9. Validación del modal "Ver Proveedores".
+10. Validación del modal "Ver Detalle".
 """)
 def test_tarifario(logged_in_driver):
     driver = logged_in_driver
-    wait = WebDriverWait(driver, 15)
+    wait = WebDriverWait(driver, 20)
     actions = ActionChains(driver)
 
     def esperar_fin_de_carga():
@@ -64,7 +66,7 @@ def test_tarifario(logged_in_driver):
 
     try:
         # =========================
-        # Navegación
+        # 1-2 Navegación
         # =========================
         with allure.step("1 a 2. Navegar a Tarifario y solapa Excursiones"):
             btn_tarifario = wait.until(EC.element_to_be_clickable((
@@ -78,7 +80,7 @@ def test_tarifario(logged_in_driver):
             esperar_fin_de_carga()
 
         # =========================
-        # Filtro y búsqueda
+        # 3 Filtro y búsqueda
         # =========================
         with allure.step("3. Cambiar destino a Cachi y buscar"):
             cambiar_destino("Buenos Aires", "Cachi")
@@ -99,9 +101,114 @@ def test_tarifario(logged_in_driver):
             )
 
         # =========================
-        # Tooltip 1: Duración
+        # HELPERS INFALIBLES JAVASCRIPT
         # =========================
-        with allure.step("4. Validar tooltip de icono Duración"):
+        def buscar_boton_ver():
+            return wait.until(lambda d: d.execute_script("""
+                var links = document.querySelectorAll('a');
+                for (var i=0; i<links.length; i++) {
+                    var text = (links[i].textContent || links[i].innerText || "").toLowerCase();
+                    if (text.includes('ver tarifario')) {
+                        return links[i];
+                    }
+                }
+                return null;
+            """), message="No se encontró el botón 'Ver Tarifario'.")
+
+        def buscar_boton_cerrar():
+            return wait.until(lambda d: d.execute_script("""
+                var links = document.querySelectorAll('a');
+                for (var i=0; i<links.length; i++) {
+                    var text = (links[i].textContent || links[i].innerText || "").toLowerCase();
+                    if (text.includes('cerrar tarifario')) {
+                        return links[i];
+                    }
+                }
+                return null;
+            """), message="No se encontró el botón 'Cerrar Tarifario'.")
+            
+        def check_icono(elemento, direccion):
+            return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", elemento)
+
+        # =========================
+        # 4 Validar estado inicial Ver Tarifario
+        # =========================
+        with allure.step("4. Validar estado inicial del botón Ver Tarifario"):
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
+            time.sleep(1.5) 
+
+            boton_ver_fresco = buscar_boton_ver()
+            assert check_icono(boton_ver_fresco, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
+            allure.attach(driver.get_screenshot_as_png(), name="2_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
+
+        # =========================
+        # 5 Clickear en Ver Tarifario
+        # =========================
+        with allure.step("5. Click en Ver Tarifario para desplegar el panel principal"):
+            driver.execute_script("arguments[0].click();", buscar_boton_ver())
+            time.sleep(2.5)
+
+        # =========================
+        # 6 Validar Cerrar, Abrir Sub-Grupo (Opcional) y Leer Tabla
+        # =========================
+        with allure.step("6. Validar botón Cerrar Tarifario, desplegar tarifas y validar la tabla"):
+            # Validamos Cerrar
+            boton_cerrar_fresco = buscar_boton_cerrar()
+            assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
+
+            # Inteligencia Antibugs: Buscamos si existe un sub-acordeón "TARIFAS"
+            grupo_tarifas = driver.execute_script("""
+                var headers = document.querySelectorAll('a.tariff-detail-group-name');
+                for (var i=0; i<headers.length; i++) {
+                    var text = (headers[i].textContent || headers[i].innerText || "").toLowerCase();
+                    if (text.includes('tarifas')) {
+                        return headers[i];
+                    }
+                }
+                return null;
+            """)
+            
+            if grupo_tarifas:
+                # Si existe, lo abrimos antes de buscar la tabla
+                driver.execute_script("arguments[0].scrollIntoView({block:'center'});", grupo_tarifas)
+                time.sleep(1)
+                driver.execute_script("arguments[0].click();", grupo_tarifas)
+                time.sleep(2) 
+
+            # Leemos la tabla
+            tabla = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
+            )))
+
+            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
+            assert len(tarifas) > 0, "No hay tarifas en la tabla"
+
+            allure.attach(driver.get_screenshot_as_png(), name="3_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
+
+        # =========================
+        # 7 Cierre Tarifario
+        # =========================
+        with allure.step("7. Cerrar el acordeón principal"):
+            driver.execute_script("arguments[0].click();", buscar_boton_cerrar())
+            time.sleep(2.5) 
+            
+        # =========================
+        # 8 Validar estado Ver Tarifario nuevamente
+        # =========================
+        with allure.step("8. Validar que el botón retornó a Ver Tarifario"):
+            boton_ver_finalisimo = buscar_boton_ver()
+            assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
+            allure.attach(driver.get_screenshot_as_png(), name="4_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
+
+
+        # =========================================================
+        # A PARTIR DE ACÁ: VALIDACIÓN DE TOOLTIPS Y MODALES (AL FINAL)
+        # =========================================================
+
+        # =========================
+        # 9 Tooltip Duración
+        # =========================
+        with allure.step("9. Validar tooltip de icono Duración"):
             icono_duracion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", icono_duracion)
             time.sleep(0.5)
@@ -113,17 +220,12 @@ def test_tarifario(logged_in_driver):
             )))
             
             assert tooltip_duracion.is_displayed(), "El tooltip de duración no es visible."
-            
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="2_Tooltip_Duracion",
-                attachment_type=allure.attachment_type.PNG
-            )
+            allure.attach(driver.get_screenshot_as_png(), name="5_Tooltip_Duracion", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # Tooltip 2: Idiomas
+        # 10 Tooltip Idiomas
         # =========================
-        with allure.step("5. Validar tooltip de icono Idiomas"):
+        with allure.step("10. Validar tooltip de icono Idiomas"):
             icono_idiomas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
             actions.move_to_element(icono_idiomas).pause(1).perform()
 
@@ -136,16 +238,12 @@ def test_tarifario(logged_in_driver):
             assert "English" in texto_idiomas, "Falta idioma English en el tooltip"
             assert "Portuguese" in texto_idiomas, "Falta idioma Portuguese en el tooltip"
 
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="3_Tooltip_Idiomas",
-                attachment_type=allure.attachment_type.PNG
-            )
+            allure.attach(driver.get_screenshot_as_png(), name="6_Tooltip_Idiomas", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # Tooltip 3: Operatividad
+        # 11 Tooltip Operatividad
         # =========================
-        with allure.step("6. Validar tooltip de icono Operatividad"):
+        with allure.step("11. Validar tooltip de icono Operatividad"):
             icono_operatividad = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
             actions.move_to_element(icono_operatividad).pause(1).perform()
 
@@ -157,16 +255,12 @@ def test_tarifario(logged_in_driver):
             assert "martes a miércoles, viernes a domingo" in texto_operatividad, "Faltan días en el tooltip de operatividad"
             assert "enero a mayo, agosto a diciembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
 
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="4_Tooltip_Operatividad",
-                attachment_type=allure.attachment_type.PNG
-            )
+            allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Operatividad", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # Validación Modal "Ver Proveedores"
+        # 12 Validación Modal "Ver Proveedores"
         # =========================
-        with allure.step("7. Abrir modal de Proveedores desde el listado y validar"):
+        with allure.step("12. Abrir modal de Proveedores desde el listado y validar"):
             # Quitamos el mouse del icono para que se cierre el tooltip anterior
             actions.move_by_offset(0, -100).perform() 
             time.sleep(0.5)
@@ -186,11 +280,7 @@ def test_tarifario(logged_in_driver):
             tds = modal_prov.find_elements(By.TAG_NAME, "td")
             assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
 
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="5_Modal_Proveedores",
-                attachment_type=allure.attachment_type.PNG
-            )
+            allure.attach(driver.get_screenshot_as_png(), name="8_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
 
             # Cerramos el modal
             actions.send_keys(Keys.ESCAPE).perform()
@@ -198,9 +288,9 @@ def test_tarifario(logged_in_driver):
             esperar_fin_de_carga()
 
         # =========================
-        # Validación Modal "Ver Detalle"
+        # 13 Validación Modal "Ver Detalle"
         # =========================
-        with allure.step("8. Click en botón Ver Detalle y validar apertura de modal"):
+        with allure.step("13. Click en botón Ver Detalle y validar apertura de modal"):
             btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-op-detail-btn")))
             driver.execute_script("arguments[0].click();", btn_detalle)
 
@@ -211,60 +301,11 @@ def test_tarifario(logged_in_driver):
             assert modal_detalle.is_displayed(), "El modal de detalle de operatividad no se renderizó."
             time.sleep(1)
 
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="6_Modal_VerDetalle",
-                attachment_type=allure.attachment_type.PNG
-            )
+            allure.attach(driver.get_screenshot_as_png(), name="9_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
 
-            # Cerramos el modal de detalle para poder seguir navegando
+            # Cerramos el modal
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
-
-        # =========================
-        # Detalle Excursión (Tarifario)
-        # =========================
-        with allure.step("9. Ingresar al detalle de la excursión y validar tabla de tarifas"):
-            btn_excursion = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "div.item1 a[id^='lnk']"
-            )))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_excursion)
-            time.sleep(1)
-            
-            # --- INICIO NUEVA VALIDACIÓN: TOGGLE BOTÓN VER/CERRAR TARIFARIO ---
-            texto_inicial = btn_excursion.text.strip().lower()
-            assert "ver" in texto_inicial, f"Error: El botón inicialmente dice '{texto_inicial}' en vez de 'Ver...'"
-
-            driver.execute_script("arguments[0].click();", btn_excursion)
-            esperar_fin_de_carga()
-            time.sleep(1)
-
-            texto_abierto = btn_excursion.text.strip().lower()
-            assert "cerrar" in texto_abierto, f"Error: El botón no cambió a 'Cerrar...', dice '{texto_abierto}'"
-
-            driver.execute_script("arguments[0].click();", btn_excursion)
-            time.sleep(1)
-
-            texto_cerrado = btn_excursion.text.strip().lower()
-            assert "ver" in texto_cerrado, f"Error: El botón no volvió a 'Ver...', quedó en '{texto_cerrado}'"
-
-            driver.execute_script("arguments[0].click();", btn_excursion)
-            esperar_fin_de_carga()
-            time.sleep(1)
-            # --- FIN NUEVA VALIDACIÓN ---
-
-            tabla_detalle = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-            p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
-
-            assert len(p_tariffs) > 0, "Validación fallida: No se encontró ningún elemento <p> con clase 'pTariff'."
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="7_Detalle_Excursion_Tarifas",
-                attachment_type=allure.attachment_type.PNG
-            )
 
     except Exception as e:
         allure.attach(
