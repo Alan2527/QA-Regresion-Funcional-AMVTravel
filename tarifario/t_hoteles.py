@@ -242,20 +242,26 @@ def test_tarifario_hoteles(logged_in_driver):
         # =========================
         # 11 Modal Ver Detalle
         # =========================
-        with allure.step("11. Click en botón Ver Detalle y validar apertura de modal de detalle"):
-            btn_detalle = wait.until(EC.presence_of_element_located((
-                By.CSS_XPATH, "//*[@id='detail']/div/p/a"
-            )))
-            
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
-            time.sleep(1) 
-            driver.execute_script("arguments[0].click();", btn_detalle)
+       with allure.step("11. Click en botón Ver Detalle y validar apertura de modal de detalle"):
+    # Buscamos el link que contiene el texto "Ver detalle" (insensible a mayúsculas/minúsculas)
+          btn_detalle = wait.until(EC.element_to_be_clickable((
+             By.XPATH, "//a[contains(translate(text(), 'VER DETALLE', 'ver detalle'), 'ver detalle')]"
+    )))
+    
+    # Scroll y Clic forzado por JS para asegurar que el 'onclick' se dispare
+           driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
+           time.sleep(1) 
+           driver.execute_script("arguments[0].click();", btn_detalle)
 
-            modal_detalle = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "div.modal-content"
-            )))
+    # Esperamos cualquier modal que se ponga visible
+           modal_detalle = wait.until(EC.visibility_of_element_located((
+             By.CSS_SELECTOR, "div.modal.show div.modal-content, div.modal.in div.modal-content"
+    )))
+    
+        assert modal_detalle.is_displayed(), "El modal de detalle no se renderizó."
+
+
             
-            assert modal_detalle.is_displayed(), "El modal de detalle no se renderizó."
             time.sleep(1)
 
             allure.attach(driver.get_screenshot_as_png(), name="7_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
