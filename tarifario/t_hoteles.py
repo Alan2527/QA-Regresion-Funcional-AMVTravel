@@ -200,12 +200,14 @@ def test_tarifario_hoteles(logged_in_driver):
         # 9 Tag Hotel Recomendado
         # =========================
         with allure.step("9. Validar existencia del tag 'Hotel Recomendado'"):
-            tag_recomendado = wait.until(EC.visibility_of_element_located((
+            # ¡SOLUCIÓN! Usamos 'presence' para evitar el Timeout si el scroll lo dejó oculto
+            tag_recomendado = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "span.featured-tag"
             )))
             
+            # Scrolleamos la pantalla para forzar que vuelva a estar a la vista
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tag_recomendado)
-            time.sleep(0.5)
+            time.sleep(1) # Le damos un segundo para que la pantalla se acomode
             
             assert tag_recomendado.is_displayed(), "El tag de Hotel Recomendado no está visible."
             allure.attach(driver.get_screenshot_as_png(), name="5_Tag_Recomendado", attachment_type=allure.attachment_type.PNG)
@@ -240,7 +242,6 @@ def test_tarifario_hoteles(logged_in_driver):
         # 11 Modal Ver Detalle
         # =========================
         with allure.step("11. Click en botón Ver Detalle y validar apertura de modal de detalle"):
-            # Usamos presence + js click para evitar cualquier problema de intercepción
             btn_detalle = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "a.tariff-op-detail-btn"
             )))
