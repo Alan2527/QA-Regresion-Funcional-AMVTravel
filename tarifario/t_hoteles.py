@@ -8,16 +8,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Hoteles Completa (Tarifas, Tags y Modales)")
+@allure.story("Consulta de Hoteles Completa (Tags, Tarifas y Modales)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
 Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
 1. Login y navegación a la solapa Hoteles.
 2. Búsqueda con destino Cachi.
-3. Validación del estado inicial del botón Ver Tarifario.
-4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
-5. Cierre del panel y validación del retorno al estado inicial.
-6. Validación Independiente del Tag "Hotel Recomendado".
+3. Validación estática del Tag "Hotel Recomendado" (Antes de alterar el scroll).
+4. Validación del estado inicial del botón Ver Tarifario.
+5. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+6. Cierre del panel y validación del retorno al estado inicial.
 7. Validación Independiente del modal "Ver Proveedores".
 8. Validación Independiente del modal "Ver Detalle".
 """)
@@ -128,89 +128,90 @@ def test_tarifario_hoteles(logged_in_driver):
         def check_icono(elemento, direccion):
             return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", elemento)
 
+
         # ==========================================
-        # BLOQUE 1: VALIDACIÓN CICLO DE VIDA DEL PANEL
+        # BLOQUE 1: ELEMENTOS ESTÁTICOS DE LA TARJETA
         # ==========================================
 
         # =========================
-        # 4 Validar estado inicial Ver Tarifario
+        # 4 Tag Hotel Recomendado (Movido al inicio)
         # =========================
-        with allure.step("4. Validar estado inicial del botón Ver Tarifario"):
+        with allure.step("4. Validar existencia del tag 'Hotel Recomendado' antes de alterar el layout"):
+            tag_recomendado = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "span.featured-tag"
+            )))
+            
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tag_recomendado)
+            time.sleep(0.5)
+            
+            assert tag_recomendado.is_displayed(), "El tag de Hotel Recomendado no está visible."
+            allure.attach(driver.get_screenshot_as_png(), name="2_Tag_Recomendado", attachment_type=allure.attachment_type.PNG)
+
+
+        # ==========================================
+        # BLOQUE 2: VALIDACIÓN CICLO DE VIDA DEL PANEL
+        # ==========================================
+
+        # =========================
+        # 5 Validar estado inicial Ver Tarifario
+        # =========================
+        with allure.step("5. Validar estado inicial del botón Ver Tarifario"):
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
             time.sleep(1.5) 
 
             boton_ver_fresco = buscar_boton_ver()
             assert check_icono(boton_ver_fresco, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
-            allure.attach(driver.get_screenshot_as_png(), name="2_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="3_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # 5 Clickear en Ver Tarifario
+        # 6 Clickear en Ver Tarifario
         # =========================
-        with allure.step("5. Click en Ver Tarifario para desplegar el panel principal"):
+        with allure.step("6. Click en Ver Tarifario para desplegar el panel principal"):
             driver.execute_script("arguments[0].click();", buscar_boton_ver())
             time.sleep(2.5)
 
         # =========================
-        # 6 Validar Cerrar, Abrir Sub-Grupo y Leer Tabla
+        # 7 Validar Cerrar, Abrir Sub-Grupo y Leer Tabla
         # =========================
-        with allure.step("6. Validar botón Cerrar Tarifario, desplegar habitación y validar la tabla"):
-            # 1. Validamos que cambió a Cerrar
+        with allure.step("7. Validar botón Cerrar Tarifario, desplegar habitación y validar la tabla"):
             boton_cerrar_fresco = buscar_boton_cerrar()
             assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            # 2. Buscamos y abrimos el acordeón de la habitación usando el selector original de Hoteles
             btn_habitacion = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "a[id^='accordeon-header-']"
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_habitacion)
             time.sleep(1)
             driver.execute_script("arguments[0].click();", btn_habitacion)
-            time.sleep(2) # Animación del acordeón
+            time.sleep(2) 
 
-            # 3. Validamos la tabla de tarifas
             tabla_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
             p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
 
             assert len(p_tariffs) > 0, "No se encontró ningún elemento pTariff en la tabla del hotel."
-            allure.attach(driver.get_screenshot_as_png(), name="3_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # 7 Cierre Tarifario
+        # 8 Cierre Tarifario
         # =========================
-        with allure.step("7. Cerrar el acordeón principal"):
+        with allure.step("8. Cerrar el acordeón principal"):
             driver.execute_script("arguments[0].click();", buscar_boton_cerrar())
             time.sleep(2.5) 
             
         # =========================
-        # 8 Validar estado Ver Tarifario nuevamente
+        # 9 Validar estado Ver Tarifario nuevamente
         # =========================
-        with allure.step("8. Validar que el botón retornó a Ver Tarifario"):
+        with allure.step("9. Validar que el botón retornó a Ver Tarifario"):
             boton_ver_finalisimo = buscar_boton_ver()
             assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
-            allure.attach(driver.get_screenshot_as_png(), name="4_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="5_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
 
 
         # ==========================================
-        # BLOQUE 2: VALIDACIÓN DE TAGS Y MODALES (INDEPENDIENTES)
+        # BLOQUE 3: VALIDACIÓN DE MODALES (INDEPENDIENTES)
         # ==========================================
-
-        # =========================
-        # 9 Tag Hotel Recomendado
-        # =========================
-        with allure.step("9. Validar existencia del tag 'Hotel Recomendado'"):
-            # ¡SOLUCIÓN! Usamos 'presence' para evitar el Timeout si el scroll lo dejó oculto
-            tag_recomendado = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "span.featured-tag"
-            )))
-            
-            # Scrolleamos la pantalla para forzar que vuelva a estar a la vista
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tag_recomendado)
-            time.sleep(1) # Le damos un segundo para que la pantalla se acomode
-            
-            assert tag_recomendado.is_displayed(), "El tag de Hotel Recomendado no está visible."
-            allure.attach(driver.get_screenshot_as_png(), name="5_Tag_Recomendado", attachment_type=allure.attachment_type.PNG)
 
         # =========================
         # 10 Modal Proveedores
@@ -227,7 +228,7 @@ def test_tarifario_hoteles(logged_in_driver):
             modal_prov = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
             )))
-            time.sleep(3) # Espera carga Ajax
+            time.sleep(3) 
 
             tds = modal_prov.find_elements(By.TAG_NAME, "td")
             assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
