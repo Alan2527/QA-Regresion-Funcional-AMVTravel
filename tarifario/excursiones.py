@@ -231,7 +231,8 @@ def test_tarifario(logged_in_driver):
             esperar_fin_de_carga()
 
         with allure.step("10. Click en botón Ver Detalle y validar apertura de modal de detalle"):
-            btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-op-detail-btn")))
+            # Selector actualizado a la nueva clase
+            btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-detail-btn")))
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
             time.sleep(0.5)
             driver.execute_script("arguments[0].click();", btn_detalle)
