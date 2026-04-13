@@ -138,7 +138,7 @@ def test_tarifario_hoteles(logged_in_driver):
         # =========================
         with allure.step("4. Validar existencia del tag 'Hotel Recomendado' antes de alterar el layout"):
             tag_recomendado = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "span.featured-tag"
+                By.CSS_SELECTOR, "div.featured-tag"
             )))
             
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tag_recomendado)
