@@ -203,10 +203,9 @@ def test_tarifario(logged_in_driver):
         # ==========================================
 
         with allure.step("9. Abrir modal de Proveedores desde el listado y validar datos"):
-            # Aseguramos que la pantalla esté centrada en la tarjeta antes de buscar los botones
             actions.move_by_offset(0, 0).perform()
             
-            btn_proveedores = wait.until(EC.element_to_be_clickable((
+            btn_proveedores = wait.until(EC.presence_of_element_located((
                 By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
             )))
             
@@ -214,27 +213,31 @@ def test_tarifario(logged_in_driver):
             time.sleep(0.5)
             driver.execute_script("arguments[0].click();", btn_proveedores)
             
-            # Validamos que cargue la tabla de proveedores dentro del modal
             modal_prov = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
             )))
-            time.sleep(3) # Espera explícita para que resuelva la llamada Ajax
+            time.sleep(3) 
 
             tds = modal_prov.find_elements(By.TAG_NAME, "td")
             assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
 
             allure.attach(driver.get_screenshot_as_png(), name="5_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
 
-            # Cerramos el modal de proveedores
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1.5)
             esperar_fin_de_carga()
 
         with allure.step("10. Click en botón Ver Detalle y validar apertura de modal de detalle"):
-            # Selector actualizado a la nueva clase
-            btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-detail-btn")))
+            
+            # ---------------------------------------------------------
+            # SELECTOR EXACTO ACTUALIZADO CON EL XPATH PROPORCIONADO
+            # ---------------------------------------------------------
+            XPATH_DETALLE = '//*[@id="detail"]/div/p/a'
+            
+            btn_detalle = wait.until(EC.presence_of_element_located((By.XPATH, XPATH_DETALLE)))
+            
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
-            time.sleep(0.5)
+            time.sleep(1) 
             driver.execute_script("arguments[0].click();", btn_detalle)
 
             modal_detalle = wait.until(EC.visibility_of_element_located((
@@ -246,7 +249,6 @@ def test_tarifario(logged_in_driver):
 
             allure.attach(driver.get_screenshot_as_png(), name="6_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
 
-            # Cerramos el modal final
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
             esperar_fin_de_carga()
