@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Excursiones Completa (Tarifas, Tooltips y Modales)")
+@allure.story("Consulta de Excursiones Completa (Tarifas, Modales y Tooltips al final)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
 Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
@@ -17,9 +17,9 @@ Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
 3. Validación del estado inicial del botón Ver Tarifario.
 4. Apertura del panel principal, sub-grupos (si existen) y validación de la tabla.
 5. Cierre del panel y validación del retorno al estado inicial.
-6. Validación Independiente de Tooltips (Duración, Idiomas, Operatividad).
-7. Validación Independiente del modal "Ver Proveedores".
-8. Validación Independiente del modal "Ver Detalle".
+6. Validación Independiente del modal "Ver Proveedores".
+7. Validación Independiente del modal "Ver Detalle".
+8. Validación Independiente de Tooltips (Duración, Idiomas, Operatividad) al final del flujo.
 """)
 def test_tarifario(logged_in_driver):
     driver = logged_in_driver
@@ -199,59 +199,13 @@ def test_tarifario(logged_in_driver):
 
 
         # ==========================================
-        # BLOQUE 2: VALIDACIÓN DE TOOLTIPS
+        # BLOQUE 2: VALIDACIÓN DE MODALES (INDEPENDIENTES)
         # ==========================================
 
-        with allure.step("9. Validar tooltip de icono Duración"):
-            icono_duracion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", icono_duracion)
-            time.sleep(0.5)
+        with allure.step("9. Abrir modal de Proveedores desde el listado y validar datos"):
+            # Aseguramos que la pantalla esté centrada en la tarjeta antes de buscar los botones
+            actions.move_by_offset(0, 0).perform()
             
-            actions.move_to_element(icono_duracion).pause(1).perform()
-
-            tooltip_duracion = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and contains(., 'Duración estimada del servicio')]"
-            )))
-            assert tooltip_duracion.is_displayed(), "El tooltip de duración no es visible."
-            allure.attach(driver.get_screenshot_as_png(), name="5_Tooltip_Duracion", attachment_type=allure.attachment_type.PNG)
-
-        with allure.step("10. Validar tooltip de icono Idiomas"):
-            icono_idiomas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
-            actions.move_to_element(icono_idiomas).pause(1).perform()
-
-            tooltip_idiomas = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Idiomas')]]"
-            )))
-            
-            texto_idiomas = tooltip_idiomas.text
-            assert "Español" in texto_idiomas, "Falta idioma Español en el tooltip"
-            assert "English" in texto_idiomas, "Falta idioma English en el tooltip"
-            assert "Portuguese" in texto_idiomas, "Falta idioma Portuguese en el tooltip"
-            allure.attach(driver.get_screenshot_as_png(), name="6_Tooltip_Idiomas", attachment_type=allure.attachment_type.PNG)
-
-        with allure.step("11. Validar tooltip de icono Operatividad"):
-            icono_operatividad = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
-            actions.move_to_element(icono_operatividad).pause(1).perform()
-
-            tooltip_operatividad = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Operatividad')]]"
-            )))
-            
-            texto_operatividad = tooltip_operatividad.text
-            assert "martes a miércoles, viernes a domingo" in texto_operatividad, "Faltan días en el tooltip de operatividad"
-            assert "enero a mayo, agosto a diciembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
-            allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Operatividad", attachment_type=allure.attachment_type.PNG)
-
-
-        # ==========================================
-        # BLOQUE 3: VALIDACIÓN DE MODALES (INDEPENDIENTES)
-        # ==========================================
-
-        with allure.step("12. Abrir modal de Proveedores desde el listado y validar datos"):
-            # Reseteamos la posición del mouse para limpiar cualquier tooltip residual
-            actions.move_by_offset(0, -100).perform() 
-            time.sleep(0.5)
-
             btn_proveedores = wait.until(EC.element_to_be_clickable((
                 By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
             )))
@@ -269,14 +223,14 @@ def test_tarifario(logged_in_driver):
             tds = modal_prov.find_elements(By.TAG_NAME, "td")
             assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
 
-            allure.attach(driver.get_screenshot_as_png(), name="8_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="5_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
 
             # Cerramos el modal de proveedores
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1.5)
             esperar_fin_de_carga()
 
-        with allure.step("13. Click en botón Ver Detalle y validar apertura de modal de detalle"):
+        with allure.step("10. Click en botón Ver Detalle y validar apertura de modal de detalle"):
             btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-op-detail-btn")))
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
             time.sleep(0.5)
@@ -289,11 +243,58 @@ def test_tarifario(logged_in_driver):
             assert modal_detalle.is_displayed(), "El modal de detalle de operatividad no se renderizó."
             time.sleep(1)
 
-            allure.attach(driver.get_screenshot_as_png(), name="9_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="6_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
 
             # Cerramos el modal final
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
+            esperar_fin_de_carga()
+
+
+        # ==========================================
+        # BLOQUE 3: VALIDACIÓN DE TOOLTIPS (AL FINAL)
+        # ==========================================
+
+        with allure.step("11. Validar tooltip de icono Duración"):
+            icono_duracion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", icono_duracion)
+            time.sleep(0.5)
+            
+            actions.move_to_element(icono_duracion).pause(1).perform()
+
+            tooltip_duracion = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and contains(., 'Duración estimada del servicio')]"
+            )))
+            assert tooltip_duracion.is_displayed(), "El tooltip de duración no es visible."
+            allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Duracion", attachment_type=allure.attachment_type.PNG)
+
+        with allure.step("12. Validar tooltip de icono Idiomas"):
+            icono_idiomas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
+            actions.move_to_element(icono_idiomas).pause(1).perform()
+
+            tooltip_idiomas = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Idiomas')]]"
+            )))
+            
+            texto_idiomas = tooltip_idiomas.text
+            assert "Español" in texto_idiomas, "Falta idioma Español en el tooltip"
+            assert "English" in texto_idiomas, "Falta idioma English en el tooltip"
+            assert "Portuguese" in texto_idiomas, "Falta idioma Portuguese en el tooltip"
+            allure.attach(driver.get_screenshot_as_png(), name="8_Tooltip_Idiomas", attachment_type=allure.attachment_type.PNG)
+
+        with allure.step("13. Validar tooltip de icono Operatividad"):
+            icono_operatividad = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
+            actions.move_to_element(icono_operatividad).pause(1).perform()
+
+            tooltip_operatividad = wait.until(EC.visibility_of_element_located((
+                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Operatividad')]]"
+            )))
+            
+            texto_operatividad = tooltip_operatividad.text
+            assert "martes a miércoles, viernes a domingo" in texto_operatividad, "Faltan días en el tooltip de operatividad"
+            assert "enero a mayo, agosto a diciembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
+            allure.attach(driver.get_screenshot_as_png(), name="9_Tooltip_Operatividad", attachment_type=allure.attachment_type.PNG)
+
 
     except Exception as e:
         allure.attach(
