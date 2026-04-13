@@ -113,29 +113,32 @@ def test_tarifario_paquetes(logged_in_driver):
         # 5.1 Validar estado inicial Ver Tarifario
         # =========================
         with allure.step("5.1. Validar estado inicial del botón Ver Tarifario"):
-            boton_ver_inicial = buscar_boton_ver()
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_ver_inicial)
-            time.sleep(1)
+            # Movemos la pantalla usando un elemento fresco
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
+            time.sleep(1.5) # Esperamos que el DOM se asiente
 
-            assert check_icono(boton_ver_inicial, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
+            # BUSCAMOS FRESCO justo antes de validar para aniquilar el StaleElement
+            boton_ver_fresco = buscar_boton_ver()
+            assert check_icono(boton_ver_fresco, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
             allure.attach(driver.get_screenshot_as_png(), name="2_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
 
         # =========================
         # 5.2 Clickear en Ver Tarifario
         # =========================
         with allure.step("5.2. Click en Ver Tarifario para desplegar el panel principal"):
-            driver.execute_script("arguments[0].click();", boton_ver_inicial)
+            # Buscamos de nuevo justo antes del click
+            driver.execute_script("arguments[0].click();", buscar_boton_ver())
             time.sleep(2.5)
 
         # =========================
         # 5.3 Validar Cerrar, Abrir Tours y Leer Tabla
         # =========================
         with allure.step("5.3. Validar botón Cerrar Tarifario, abrir sub-grupo de tours y validar la tabla"):
-            # 1. Validamos que el botón principal dice "Cerrar"
-            boton_cerrar = buscar_boton_cerrar()
-            assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
+            # Buscamos el botón cerrar fresco
+            boton_cerrar_fresco = buscar_boton_cerrar()
+            assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            # 2. Buscamos y abrimos el sub-acordeón de tours
+            # Buscamos y abrimos el sub-acordeón de tours
             sub_grupos = wait.until(EC.presence_of_all_elements_located((
                 By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-tours"
             )))
@@ -148,7 +151,7 @@ def test_tarifario_paquetes(logged_in_driver):
             driver.execute_script("arguments[0].click();", primer_sub_grupo)
             time.sleep(2) # Pausa para que se dibuje el contenido del tour
 
-            # 3. Leemos la tabla
+            # Leemos la tabla
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
@@ -162,13 +165,15 @@ def test_tarifario_paquetes(logged_in_driver):
         # 5.4 Cierre Tarifario
         # =========================
         with allure.step("5.4. Cerrar el acordeón principal"):
-            driver.execute_script("arguments[0].click();", boton_cerrar)
+            # Clickeamos buscando el botón cerrar fresco nuevamente
+            driver.execute_script("arguments[0].click();", buscar_boton_cerrar())
             time.sleep(2.5) # Esperamos que termine de cerrarse todo
             
         # =========================
         # 5.5 Validar estado Ver Tarifario nuevamente
         # =========================
         with allure.step("5.5. Validar que el botón retornó a Ver Tarifario"):
+            # Buscamos fresco para la validación final
             boton_ver_finalisimo = buscar_boton_ver()
             assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
 
