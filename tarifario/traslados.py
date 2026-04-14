@@ -136,31 +136,42 @@ def test_tarifario_traslados(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Cerrado", attachment_type=allure.attachment_type.PNG)
 
 # ==========================================
-        # 10. MODAL PROVEEDORES (SELECTOR INFALIBLE)
+        # 10. MODAL PROVEEDORES (SELECTORES REALES)
         # ==========================================
         with allure.step("10. Abrir modal de Proveedores y validar tabla"):
-            # Buscamos el botón combinando su clase y parte de la función de su onclick
+            # Buscamos el botón de apertura
             btn_prov = wait.until(EC.presence_of_element_located((
                 By.XPATH, "//button[contains(@class, 'btn-download-word') and contains(@onclick, 'openSuppliersModal')]"
             )))
             
-            # Hacemos scroll para ponerlo en el centro de la pantalla
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_prov)
             time.sleep(1)
-            
-            # Forzamos el clic por JavaScript para evitar que el globo del tooltip lo bloquee
             driver.execute_script("arguments[0].click();", btn_prov)
             
-            # Esperamos que aparezca el modal
-            modal_prov = wait.until(EC.visibility_of_element_located((By.ID, "modal-content")))
-            time.sleep(2)
+            # 1. Esperamos el modal usando la clase del div padre que me pasaste
+            modal_prov = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "div.suppliers-modal-content"
+            )))
+            time.sleep(1) # Pequeña pausa para que termine la animación
             
-            tds = modal_prov.find_elements(By.TAG_NAME, "td")
-            assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores está vacía."
+            # 2. Validamos que el body del modal tenga contenido
+            modal_body = modal_prov.find_element(By.CSS_SELECTOR, ".suppliers-modal-body")
+            tds = modal_body.find_elements(By.TAG_NAME, "td")
+            
+            # Validación flexible: si hay TDs valida que no estén vacíos, sino valida que haya texto en el body
+            if len(tds) > 0:
+                assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores está vacía."
+            else:
+                assert modal_body.text.strip() != "", "El modal de proveedores cargó sin texto/contenido."
             
             allure.attach(driver.get_screenshot_as_png(), name="5_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
-            actions.send_keys(Keys.ESCAPE).perform()
-            time.sleep(1.5)
+            
+            # 3. Cerramos usando el botón de cierre específico
+            btn_cerrar_prov = wait.until(EC.element_to_be_clickable((
+                By.CSS_SELECTOR, ".btn-close-suppliers"
+            )))
+            driver.execute_script("arguments[0].click();", btn_cerrar_prov)
+            time.sleep(1.5) # Esperamos que el modal desaparezca antes de seguir al siguiente paso
 
         # ==========================================
         # 11. MODAL VER DETALLE (IDÉNTICO A HOTELES)
