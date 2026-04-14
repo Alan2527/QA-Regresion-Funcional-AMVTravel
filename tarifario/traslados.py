@@ -135,18 +135,23 @@ def test_tarifario_traslados(logged_in_driver):
             assert check_icono(buscar_boton_ver(), "down")
             allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Cerrado", attachment_type=allure.attachment_type.PNG)
 
-        # ==========================================
-        # 10. MODAL PROVEEDORES (FIXED SELECTOR)
+# ==========================================
+        # 10. MODAL PROVEEDORES (SELECTOR INFALIBLE)
         # ==========================================
         with allure.step("10. Abrir modal de Proveedores y validar tabla"):
-            # Usando el selector específico proporcionado
+            # Buscamos el botón combinando su clase y parte de la función de su onclick
             btn_prov = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "button.btn-download-word"
+                By.XPATH, "//button[contains(@class, 'btn-download-word') and contains(@onclick, 'openSuppliersModal')]"
             )))
+            
+            # Hacemos scroll para ponerlo en el centro de la pantalla
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_prov)
             time.sleep(1)
+            
+            # Forzamos el clic por JavaScript para evitar que el globo del tooltip lo bloquee
             driver.execute_script("arguments[0].click();", btn_prov)
             
+            # Esperamos que aparezca el modal
             modal_prov = wait.until(EC.visibility_of_element_located((By.ID, "suppliersModal")))
             time.sleep(2)
             
