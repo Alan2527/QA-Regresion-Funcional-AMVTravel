@@ -152,7 +152,7 @@ def test_tarifario_traslados(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_prov)
             
             # Esperamos que aparezca el modal
-            modal_prov = wait.until(EC.visibility_of_element_located((By.ID, "suppliersModal")))
+            modal_prov = wait.until(EC.visibility_of_element_located((By.ID, "modal-content")))
             time.sleep(2)
             
             tds = modal_prov.find_elements(By.TAG_NAME, "td")
