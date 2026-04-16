@@ -10,18 +10,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.feature("Tarifario")
 @allure.story("Consulta de Cena Show - Flujo Funcional")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.description("""
-Siguiendo el modelo exitoso de Traslados:
-1. Login y navegación.
-2. Filtro Cachi.
-3. Validación de botones Ver/Cerrar (Toggle).
-4. Validación de tabla.
-5. Captura de evidencia en cada paso.
-6. Iconos y Tooltips al final.
-""")
 def test_tarifario_cenashow(logged_in_driver):
     driver = logged_in_driver
-    wait = WebDriverWait(driver, 20)  # Aumentamos a 20 como en Traslados
+    wait = WebDriverWait(driver, 20)
     actions = ActionChains(driver)
 
     def esperar_fin_de_carga():
@@ -36,7 +27,7 @@ def test_tarifario_cenashow(logged_in_driver):
 
     try:
         # ==========================================
-        # 1. LOGIN (Manejado por el fixture)
+        # 1. LOGIN (Ya realizado por el driver)
         # ==========================================
 
         # ==========================================
@@ -80,7 +71,7 @@ def test_tarifario_cenashow(logged_in_driver):
         # ==========================================
         # 5. VALIDAR BOTÓN "VER TARIFARIO"
         # ==========================================
-        with allure.step("5. Validar existencia del botón 'Ver Tarifario'"):
+        with allure.step("5. Validar texto 'Ver Tarifario'"):
             btn_ver = wait.until(lambda d: d.execute_script("""
                 return [...document.querySelectorAll('a')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
             """))
@@ -101,9 +92,14 @@ def test_tarifario_cenashow(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="4_Boton_Cerrar_Tarifario", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # 7. VALIDAR TABLA DE TARIFARIO
+        # 7. VALIDAR TABLA DE TARIFARIO (CON SCROLL)
         # ==========================================
         with allure.step("7. Validar tabla de tarifas"):
+            # Hacemos un pequeño scroll hacia abajo para asegurar que la tabla sea detectable
+            driver.execute_script("window.scrollBy(0, 250);")
+            time.sleep(1)
+            
+            # Cambiamos By.ID_SELECTOR por By.CSS_SELECTOR
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped']"
             )))
@@ -111,11 +107,11 @@ def test_tarifario_cenashow(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="5_Tabla_Tarifas", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # 8. CERRAR Y VALIDAR RETORNO A "VER"
+        # 8. CLICK CERRAR Y VALIDAR "VER TARIFARIO"
         # ==========================================
         with allure.step("8. Click en Cerrar y validar retorno a 'Ver Tarifario'"):
             driver.execute_script("arguments[0].click();", btn_cerrar)
-            time.sleep(2) # Tiempo para animación de cierre
+            time.sleep(2) # Tiempo para la animación de cierre
             
             btn_vuelta = wait.until(lambda d: d.execute_script("""
                 return [...document.querySelectorAll('a')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
@@ -127,16 +123,15 @@ def test_tarifario_cenashow(logged_in_driver):
         # 9. VALIDAR ICONOS Y TOOLTIPS
         # ==========================================
         with allure.step("9. Validar iconos y tooltips"):
-            # Dejamos abierto para ver tooltips si es necesario
+            # Re-abrimos para que los iconos sean visibles
             driver.execute_script("arguments[0].click();", btn_vuelta)
             esperar_fin_de_carga()
             
             icon_clock = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
             actions.move_to_element(icon_clock).pause(1.5).perform()
             
-            # Captura final con tooltip
             allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Final", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
         allure.attach(driver.get_screenshot_as_png(), name="ERROR_CRITICO", attachment_type=allure.attachment_type.PNG)
-        pytest.fail(f"Error en el flujo: {str(e)}")
+        pytest.fail(f"Fallo en el flujo: {str(e)}")
