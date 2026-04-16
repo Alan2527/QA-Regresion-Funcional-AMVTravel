@@ -1,9 +1,0 @@
-"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
-"
-Este caso de prueba cubre el flujo de Tarifario - Cena Show:
-1. Navegación y búsqueda.
-2. Validación del ciclo de vida del botón Ver/Cerrar Tarifario.
-3. Validación de la tabla de tarifas.
-4. Validación de modales (Proveedores y Detalle).
-5. Validación de Tooltips (Duración, Idiomas, Operatividad) - Al final.
-","19261","test_tarifario_cenashow","tarifario","Wed Apr 15 18:56:05 UTC 2026","failed","Wed Apr 15 18:56:24 UTC 2026","","cenashow","",""
