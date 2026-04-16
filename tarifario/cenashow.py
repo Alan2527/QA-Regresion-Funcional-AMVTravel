@@ -13,7 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.description("""
 Este caso de prueba cubre el flujo de Tarifario - Cena Show:
 1. Navegación y búsqueda.
-2. Validación del ciclo de vida del botón Ver/Cerrar Tarifario.
+2. Validación del ciclo de vida del botón Ver/Cerrar Tarifario (Toggle).
 3. Validación de la tabla de tarifas.
 4. Validación de modales (Proveedores y Detalle).
 5. Validación de Tooltips (Duración, Idiomas, Operatividad) - Al final.
@@ -67,7 +67,7 @@ def test_tarifario_cenashow(logged_in_driver):
                 if (text.includes('ver tarifario')) return links[i];
             }
             return null;
-        """))
+        """), message="No se encontró el botón 'Ver Tarifario'")
 
     def buscar_boton_cerrar():
         return wait.until(lambda d: d.execute_script("""
@@ -77,7 +77,7 @@ def test_tarifario_cenashow(logged_in_driver):
                 if (text.includes('cerrar tarifario')) return links[i];
             }
             return null;
-        """))
+        """), message="No se encontró el botón 'Cerrar Tarifario'")
 
     try:
         # ==========================================
@@ -104,21 +104,24 @@ def test_tarifario_cenashow(logged_in_driver):
         # BLOQUE 2: CICLO DE VIDA DEL BOTÓN (TOGGLE)
         # ==========================================
         with allure.step("3. Validar toggle Ver/Cerrar Tarifario"):
-            # 3.1 Validar estado inicial "Ver"
+            # 3.1 Validar estado inicial "Ver" (Usando get_attribute para evitar el string vacío)
             btn_ver = buscar_boton_ver()
-            assert "ver" in btn_ver.text.strip().lower()
+            texto_ver = btn_ver.get_attribute("innerText").strip().lower()
+            assert "ver" in texto_ver, f"Se esperaba 'ver' pero se obtuvo: '{texto_ver}'"
             
             # 3.2 Click y validar cambio a "Cerrar"
             driver.execute_script("arguments[0].click();", btn_ver)
             esperar_fin_de_carga()
             btn_cerrar = buscar_boton_cerrar()
-            assert "cerrar" in btn_cerrar.text.strip().lower()
+            texto_cerrar = btn_cerrar.get_attribute("innerText").strip().lower()
+            assert "cerrar" in texto_cerrar, f"Se esperaba 'cerrar' pero se obtuvo: '{texto_cerrar}'"
             
             # 3.3 Click y validar vuelta a "Ver"
             driver.execute_script("arguments[0].click();", btn_cerrar)
-            time.sleep(1)
+            time.sleep(1.5) # Damos un pequeño margen para el cambio de estado
             btn_vuelta = buscar_boton_ver()
-            assert "ver" in btn_vuelta.text.strip().lower()
+            texto_vuelta = btn_vuelta.get_attribute("innerText").strip().lower()
+            assert "ver" in texto_vuelta, f"Error en vuelta: se obtuvo '{texto_vuelta}'"
             
             # Lo dejamos abierto para validar las tarifas
             driver.execute_script("arguments[0].click();", btn_vuelta)
@@ -140,7 +143,7 @@ def test_tarifario_cenashow(logged_in_driver):
             btn_prov = wait.until(EC.element_to_be_clickable((By.XPATH, "(//button[contains(text(), 'Ver Proveedores')])[1]")))
             driver.execute_script("arguments[0].click();", btn_prov)
             modal_prov = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".modal.show, .modal.in")))
-            assert any(td.text.strip() != "" for td in modal_prov.find_elements(By.TAG_NAME, "td"))
+            assert any(td.get_attribute("innerText").strip() != "" for td in modal_prov.find_elements(By.TAG_NAME, "td"))
             actions.send_keys(Keys.ESCAPE).perform()
             time.sleep(1)
 
@@ -165,14 +168,14 @@ def test_tarifario_cenashow(logged_in_driver):
             icono = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
             actions.move_to_element(icono).pause(1).perform()
             tooltip = wait.until(EC.visibility_of_element_located((By.XPATH, "//span[.//strong[contains(text(), 'Idiomas')]]")))
-            assert "Español" in tooltip.text
-            assert "English" in tooltip.text
+            assert "Español" in tooltip.get_attribute("innerText")
+            assert "English" in tooltip.get_attribute("innerText")
 
         with allure.step("9. Validar Tooltip de Operatividad"):
             icono = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
             actions.move_to_element(icono).pause(1).perform()
             tooltip = wait.until(EC.visibility_of_element_located((By.XPATH, "//span[.//strong[contains(text(), 'Operatividad')]]")))
-            assert "lunes" in tooltip.text.lower()
+            assert "lunes" in tooltip.get_attribute("innerText").lower()
             allure.attach(driver.get_screenshot_as_png(), name="Tooltips_Final", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
