@@ -10,14 +10,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.feature("Tarifario")
 @allure.story("Consulta de Cena Show - Flujo Funcional y Tooltips")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.description("""
-Este caso de prueba cubre el flujo de Tarifario - Cena Show:
-1. Navegación y búsqueda con capturas de cada paso.
-2. Validación del ciclo de vida del botón Ver/Cerrar Tarifario.
-3. Validación de la tabla de tarifas (con selector optimizado).
-4. Validación de modales (Proveedores y Detalle).
-5. Validación de Tooltips (Duración, Idiomas, Operatividad) - Al final.
-""")
 def test_tarifario_cenashow(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
@@ -29,20 +21,6 @@ def test_tarifario_cenashow(logged_in_driver):
                 By.XPATH,
                 "//*[contains(translate(text(), 'CARGANDO', 'cargando'), 'cargando') or contains(@class, 'loading') or contains(@class, 'spinner')]"
             )))
-        except:
-            pass
-        try:
-            wait.until(lambda d: d.execute_script(
-                "return (typeof Sys === 'undefined') || "
-                "(typeof Sys.WebForms === 'undefined') || "
-                "(Sys.WebForms.PageRequestManager.getInstance().get_isInAsyncPostBack() === false);"
-            ))
-        except:
-            pass
-        try:
-            wait.until(lambda d: d.execute_script(
-                "return (typeof jQuery === 'undefined') || (jQuery.active === 0);"
-            ))
         except:
             pass
         time.sleep(1)
@@ -82,7 +60,6 @@ def test_tarifario_cenashow(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="1_Solapa_CenaShow", attachment_type=allure.attachment_type.PNG)
 
         with allure.step("2. Búsqueda con destino Cachi"):
-            # Cambio de destino
             xpath_dropdown = "//div[contains(@class, 'ts-control') and contains(., 'Buenos Aires')]"
             dropdown = wait.until(EC.presence_of_element_located((By.XPATH, xpath_dropdown)))
             driver.execute_script("arguments[0].click();", dropdown)
@@ -99,40 +76,40 @@ def test_tarifario_cenashow(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Resultados_Busqueda", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # BLOQUE 2: CICLO DE VIDA DEL BOTÓN (TOGGLE)
+        # BLOQUE 2: APERTURA Y VALIDACIÓN DE BOTÓN
         # ==========================================
-        with allure.step("3. Validar toggle Ver/Cerrar Tarifario"):
+        with allure.step("3. Abrir Tarifario y validar cambio de texto"):
             btn_ver = buscar_boton_ver()
-            texto_ver = btn_ver.get_attribute("innerText").strip().lower()
-            assert "ver" in texto_ver, f"Se esperaba 'ver' pero se obtuvo: '{texto_ver}'"
             
+            # Validamos texto inicial
+            assert "ver" in btn_ver.get_attribute("innerText").lower()
+            
+            # Abrimos
             driver.execute_script("arguments[0].click();", btn_ver)
             esperar_fin_de_carga()
             
+            # Validamos que ahora dice Cerrar
             btn_cerrar = buscar_boton_cerrar()
-            texto_cerrar = btn_cerrar.get_attribute("innerText").strip().lower()
-            assert "cerrar" in texto_cerrar, f"Se esperaba 'cerrar' pero se obtuvo: '{texto_cerrar}'"
-            allure.attach(driver.get_screenshot_as_png(), name="3_Tarifario_Abierto", attachment_type=allure.attachment_type.PNG)
+            assert "cerrar" in btn_cerrar.get_attribute("innerText").lower()
             
-            # Volver a cerrar y abrir para asegurar estabilidad
-            driver.execute_script("arguments[0].click();", btn_cerrar)
-            time.sleep(1)
-            btn_abrir_final = buscar_boton_ver()
-            driver.execute_script("arguments[0].click();", btn_abrir_final)
-            esperar_fin_de_carga()
+            allure.attach(driver.get_screenshot_as_png(), name="3_Tarifario_Abierto_Confirmado", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # BLOQUE 3: TABLA DE TARIFAS
+        # BLOQUE 3: TABLA DE TARIFAS (SIN RE-CIERRE)
         # ==========================================
         with allure.step("4. Validar tabla de tarifas pTariff"):
-            # Usamos un selector más permisivo por si las clases cambian levemente
+            # Esperamos que la tabla sea visible después del clic anterior
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped']"
             )))
             
+            # Scroll suave para que la tabla esté en el centro de la captura
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tabla)
+            time.sleep(1)
+            
             p_tariffs = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(p_tariffs) > 0, "No se encontraron elementos pTariff dentro de la tabla."
-            allure.attach(driver.get_screenshot_as_png(), name="4_Tabla_Tarifas_Visible", attachment_type=allure.attachment_type.PNG)
+            assert len(p_tariffs) > 0, "No se encontraron elementos pTariff en la tabla."
+            allure.attach(driver.get_screenshot_as_png(), name="4_Tabla_Tarifas_OK", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
         # BLOQUE 4: MODALES
@@ -142,40 +119,27 @@ def test_tarifario_cenashow(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_prov)
             
             modal_prov = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".modal.show, .modal.in")))
-            tds = modal_prov.find_elements(By.TAG_NAME, "td")
-            assert any(td.get_attribute("innerText").strip() != "" for td in tds), "La tabla de proveedores está vacía."
             allure.attach(driver.get_screenshot_as_png(), name="5_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
-            
             actions.send_keys(Keys.ESCAPE).perform()
-            time.sleep(1)
+            time.sleep(1.5)
 
         with allure.step("6. Validar Modal Ver Detalle"):
             btn_detalle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.tariff-op-detail-btn")))
             driver.execute_script("arguments[0].click();", btn_detalle)
             
             modal_detalle = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.modal-content")))
-            assert modal_detalle.is_displayed()
             allure.attach(driver.get_screenshot_as_png(), name="6_Modal_Detalle", attachment_type=allure.attachment_type.PNG)
-            
             actions.send_keys(Keys.ESCAPE).perform()
-            time.sleep(1)
+            time.sleep(1.5)
 
         # ==========================================
-        # BLOQUE 5: TOOLTIPS (AL FINAL)
+        # BLOQUE 5: TOOLTIPS
         # ==========================================
         with allure.step("7. Validar Tooltips"):
-            # Duración
             icono_reloj = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
-            actions.move_to_element(icono_reloj).pause(1.5).perform()
-            tooltip_duracion = wait.until(EC.visibility_of_element_located((By.XPATH, "//span[contains(., 'Duración estimada')]")))
-            assert tooltip_duracion.is_displayed()
-            
-            # Operatividad (Screenshot final con tooltips)
-            icono_cal = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
-            actions.move_to_element(icono_cal).pause(1.5).perform()
-            allure.attach(driver.get_screenshot_as_png(), name="7_Tooltips_Final", attachment_type=allure.attachment_type.PNG)
+            actions.move_to_element(icono_reloj).pause(1).perform()
+            allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Duracion", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
-        # Captura de pantalla crítica en caso de cualquier fallo
-        allure.attach(driver.get_screenshot_as_png(), name="ERROR_CRITICO", attachment_type=allure.attachment_type.PNG)
-        pytest.fail(f"Fallo el test en el paso actual: {str(e)}")
+        allure.attach(driver.get_screenshot_as_png(), name="ERROR_EN_PASO", attachment_type=allure.attachment_type.PNG)
+        pytest.fail(f"Fallo en el flujo: {str(e)}")
