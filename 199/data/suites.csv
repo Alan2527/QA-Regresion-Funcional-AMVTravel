@@ -1,0 +1,10 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Siguiendo el modelo exitoso de Traslados:
+1. Login y navegación.
+2. Filtro Cachi.
+3. Validación de botones Ver/Cerrar (Toggle).
+4. Validación de tabla.
+5. Captura de evidencia en cada paso.
+6. Iconos y Tooltips al final.
+","31757","test_tarifario_cenashow","tarifario","Thu Apr 16 16:37:45 UTC 2026","failed","Thu Apr 16 16:38:17 UTC 2026","","cenashow","",""
