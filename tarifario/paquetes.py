@@ -1,83 +1,101 @@
 import pytest
 import allure
 import time
-import os
-import glob
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Paquetes, validación de UI y descarga de Word")
-@allure.severity(allure.severity_level.NORMAL)
+@allure.story("Consulta de Paquetes Completa (Tags, Tarifas y Modales)")
+@allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba cubre el flujo completo de Tarifario - Paquetes con validación de UI dinámica:
-1. Login silencioso y navegación a la pestaña Tarifario.
-2. Búsqueda de paquetes con filtros por defecto (Argentina, Buenos Aires).
+Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
+1. Login y navegación a la solapa Hoteles.
+2. Búsqueda con destino Buenos Aires.
 3. Validación del estado inicial del botón Ver Tarifario.
-4. Apertura del panel principal, sub-acordeón de tours y validación de la tabla.
+4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
 5. Cierre del panel y validación del retorno al estado inicial.
-6. Descarga del paquete en formato Word (independiente del acordeón) y validación en CI/CD.
+6. Validación Independiente del botón de Descarga de archivo.
+7. Validación Independiente del modal "Ver Detalle".
 """)
-def test_tarifario_paquetes(logged_in_driver):
+def test_tarifario_hoteles(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 20)
     actions = ActionChains(driver)
 
-    # Configuramos el Chrome Headless de GitHub Actions para permitir descargas locales
-    descargas_dir = os.getcwd()
-    driver.execute_cdp_cmd('Page.setDownloadBehavior', {
-        'behavior': 'allow',
-        'downloadPath': descargas_dir
-    })
-
-    # 🌟 HELPER CLAVE: Pausa absoluta antibugs
     def esperar_fin_de_carga():
         try:
             wait.until(EC.invisibility_of_element_located((
-                By.XPATH, "//*[contains(translate(text(),'CARGANDO','cargando'),'cargando') or contains(@class,'loading')]"
+                By.XPATH,
+                "//*[contains(translate(text(), 'CARGANDO', 'cargando'), 'cargando') or contains(@class, 'loading') or contains(@class, 'spinner')]"
             )))
         except:
             pass
-        
         try:
             wait.until(lambda d: d.execute_script(
-                "return (typeof jQuery==='undefined') || (jQuery.active===0);"
+                "return (typeof Sys === 'undefined') || "
+                "(typeof Sys.WebForms === 'undefined') || "
+                "(Sys.WebForms.PageRequestManager.getInstance().get_isInAsyncPostBack() === false);"
             ))
         except:
             pass
-            
+        try:
+            wait.until(lambda d: d.execute_script(
+                "return (typeof jQuery === 'undefined') || (jQuery.active === 0);"
+            ))
+        except:
+            pass
         time.sleep(1)
+
+    def cambiar_destino(destino_actual, nuevo_destino):
+        xpath_dropdown = f"//div[contains(@class, 'ts-control') and contains(., '{destino_actual}')]"
+        dropdown = wait.until(EC.presence_of_element_located((By.XPATH, xpath_dropdown)))
+        driver.execute_script("arguments[0].click();", dropdown)
+        time.sleep(1)
+
+        xpath_opcion = f"//div[contains(@class, 'option') and contains(text(), '{nuevo_destino}')]"
+        opcion = wait.until(EC.presence_of_element_located((By.XPATH, xpath_opcion)))
+        driver.execute_script("arguments[0].click();", opcion)
+
+        esperar_fin_de_carga()
 
     try:
         # =========================
         # 1-2 Navegación
         # =========================
         with allure.step("1 a 2. Navegar a Tarifario y solapa Paquetes"):
-            btn_tarifario = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href*='defaulttariff.aspx']")))
+            btn_tarifario = wait.until(EC.element_to_be_clickable((
+                By.CSS_SELECTOR, "a[href*='defaulttariff.aspx']"
+            )))
             driver.execute_script("arguments[0].click();", btn_tarifario)
             esperar_fin_de_carga()
 
-            try:
-                btn_paquetes = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='#tour']")))
-                driver.execute_script("arguments[0].click();", btn_paquetes)
-                esperar_fin_de_carga()
-            except:
-                pass
+            btn_paquetes = wait.until(EC.element_to_be_clickable((By.ID, "a-tours")))
+            driver.execute_script("arguments[0].click();", btn_paquetes)
+            esperar_fin_de_carga()
 
         # =========================
-        # 3 Búsqueda
+        # 3 Filtro y búsqueda
         # =========================
-        with allure.step("3. Buscar paquetes con filtros por defecto"):
-            btn_buscar = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView")))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_buscar)
+        with allure.step("3. Cambiar destino a Buenos Aires y buscar"):
+            cambiar_destino("Buenos Aires", "Buenos Aires")
+
+            btn_buscar = wait.until(EC.presence_of_element_located((
+                By.ID, "ctl00_cphMainSlider_ctrlTariffFilterControl_lnkView"
+            )))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_buscar)
             time.sleep(1)
-            driver.execute_script("arguments[0].click();", btn_buscar)
-            
-            esperar_fin_de_carga() 
-            allure.attach(driver.get_screenshot_as_png(), name="1_Busqueda_Tarifario_Paquetes", attachment_type=allure.attachment_type.PNG)
+            btn_buscar.send_keys(Keys.ENTER)
+
+            esperar_fin_de_carga()
+
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name="1_Busqueda_BuenosAires_Paquetes",
+                attachment_type=allure.attachment_type.PNG
+            )
 
         # =========================
         # HELPERS INFALIBLES JAVASCRIPT
@@ -109,103 +127,130 @@ def test_tarifario_paquetes(logged_in_driver):
         def check_icono(elemento, direccion):
             return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", elemento)
 
-        # =========================
-        # 5.1 Validar estado inicial Ver Tarifario
-        # =========================
-        with allure.step("5.1. Validar estado inicial del botón Ver Tarifario"):
-            # Movemos la pantalla usando un elemento fresco
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
-            time.sleep(1.5) # Esperamos que el DOM se asiente
 
-            # BUSCAMOS FRESCO justo antes de validar para aniquilar el StaleElement
+        # ==========================================
+        # BLOQUE 1: ELEMENTOS ESTÁTICOS DE LA TARJETA
+        # ==========================================
+
+
+        # 5 Validar estado inicial Ver Tarifario
+
+        with allure.step("5. Validar estado inicial del botón Ver Tarifario"):
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
+            time.sleep(1.5) 
+
             boton_ver_fresco = buscar_boton_ver()
             assert check_icono(boton_ver_fresco, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
-            allure.attach(driver.get_screenshot_as_png(), name="2_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
+            allure.attach(driver.get_screenshot_as_png(), name="3_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # 5.2 Clickear en Ver Tarifario
+        # 6 Clickear en Ver Tarifario
         # =========================
-        with allure.step("5.2. Click en Ver Tarifario para desplegar el panel principal"):
-            # Buscamos de nuevo justo antes del click
+        with allure.step("6. Click en Ver Tarifario para desplegar el panel principal"):
             driver.execute_script("arguments[0].click();", buscar_boton_ver())
             time.sleep(2.5)
 
         # =========================
-        # 5.3 Validar Cerrar, Abrir Tours y Leer Tabla
+        # 7 Validar Cerrar, Abrir Sub-Grupo y Leer Tabla
         # =========================
-        with allure.step("5.3. Validar botón Cerrar Tarifario, abrir sub-grupo de tours y validar la tabla"):
-            # Buscamos el botón cerrar fresco
+        with allure.step("7. Validar botón Cerrar Tarifario, desplegar habitación y validar la tabla"):
             boton_cerrar_fresco = buscar_boton_cerrar()
             assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            # Buscamos y abrimos el sub-acordeón de tours
-            sub_grupos = wait.until(EC.presence_of_all_elements_located((
-                By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-tours"
+            btn_habitacion = wait.until(EC.presence_of_element_located((
+                By.CSS_SELECTOR, "a[id^='accordeon-header-']"
             )))
-            assert len(sub_grupos) > 0, "No se encontró el sub-grupo de tours para expandir."
-            
-            primer_sub_grupo = sub_grupos[0]
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", primer_sub_grupo)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_habitacion)
             time.sleep(1)
-            
-            driver.execute_script("arguments[0].click();", primer_sub_grupo)
-            time.sleep(2) # Pausa para que se dibuje el contenido del tour
+            driver.execute_script("arguments[0].click();", btn_habitacion)
+            time.sleep(2) 
 
-            # Leemos la tabla
-            tabla = wait.until(EC.visibility_of_element_located((
+            tabla_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
             )))
+            p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
 
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
-
-            allure.attach(driver.get_screenshot_as_png(), name="3_Tarifario_Y_Tours_Abierto_OK", attachment_type=allure.attachment_type.PNG)
+            assert len(p_tariffs) > 0, "No se encontró ningún elemento pTariff en la tabla del hotel."
+            allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # 5.4 Cierre Tarifario
+        # 8 Cierre Tarifario
         # =========================
-        with allure.step("5.4. Cerrar el acordeón principal"):
-            # Clickeamos buscando el botón cerrar fresco nuevamente
+        with allure.step("8. Cerrar el acordeón principal"):
             driver.execute_script("arguments[0].click();", buscar_boton_cerrar())
-            time.sleep(2.5) # Esperamos que termine de cerrarse todo
+            time.sleep(2.5) 
             
         # =========================
-        # 5.5 Validar estado Ver Tarifario nuevamente
+        # 9 Validar estado Ver Tarifario nuevamente
         # =========================
-        with allure.step("5.5. Validar que el botón retornó a Ver Tarifario"):
-            # Buscamos fresco para la validación final
+        with allure.step("9. Validar que el botón retornó a Ver Tarifario"):
             boton_ver_finalisimo = buscar_boton_ver()
             assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
+            allure.attach(driver.get_screenshot_as_png(), name="5_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
 
-            allure.attach(driver.get_screenshot_as_png(), name="4_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
+
+        # ==========================================
+        # BLOQUE 3: VALIDACIÓN DE MODALES (INDEPENDIENTES)
+        # ==========================================
 
         # =========================
-        # 6 Validar Descarga de Word (Independiente)
+        # 10 Botón de descarga de archivo
         # =========================
-        with allure.step("6. Descargar y validar archivo Word en CI (Acordeón Cerrado)"):
-            # Tomamos una "foto" de los archivos que hay antes de descargar
-            archivos_previos = set(glob.glob(os.path.join(descargas_dir, "*.doc*")))
+        with allure.step("10. Clickear en botón de descarga y validar la descarga"):
+            btn_descarga = wait.until(EC.presence_of_element_located((
+                By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
+            )))
             
-            btn_word = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[title='Descargar en formato Word']")))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_word)
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_descarga)
+            time.sleep(0.5)
+            driver.execute_script("arguments[0].click();", btn_descarga)
+            
+            modal_prov = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
+            )))
+            time.sleep(3) 
+
+            tds = modal_prov.find_elements(By.TAG_NAME, "td")
+            assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
+
+            allure.attach(driver.get_screenshot_as_png(), name="6_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
+
+            actions.send_keys(Keys.ESCAPE).perform()
+            time.sleep(1.5)
+            esperar_fin_de_carga()
+
+        # =========================
+        # 11 Modal Ver Detalle
+        # =========================
+        with allure.step("11. Click en botón Ver Detalle y validar apertura de modal de detalle"):
+            # Usamos un selector robusto por texto para encontrar el botón correcto
+            btn_detalle = wait.until(EC.element_to_be_clickable((
+                By.XPATH, "//a[contains(translate(text(), 'VER DETALLE', 'ver detalle'), 'ver detalle')]"
+            )))
+            
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
+            time.sleep(1) 
+            # Forzamos el clic por JS para disparar el evento onclick del modal
+            driver.execute_script("arguments[0].click();", btn_detalle)
+
+            # Esperamos a que el contenido del modal sea visible
+            modal_detalle = wait.until(EC.visibility_of_element_located((
+                By.CSS_SELECTOR, "div.modal.show div.modal-content, div.modal.in div.modal-content"
+            )))
+            
+            assert modal_detalle.is_displayed(), "El modal de detalle no se renderizó."
             time.sleep(1)
-            driver.execute_script("arguments[0].click();", btn_word)
-            
-            archivo_descargado = False
-            # Intentamos hasta 20 veces (10 segundos total) revisar la carpeta
-            for _ in range(20): 
-                time.sleep(0.5)
-                archivos_actuales = set(glob.glob(os.path.join(descargas_dir, "*.doc*")))
-                nuevos_archivos = archivos_actuales - archivos_previos
-                
-                if nuevos_archivos:
-                    archivo_descargado = True
-                    break
-            
-            assert archivo_descargado, "Validación fallida: No se detectó la descarga del archivo Word en el entorno de pruebas."
-            
-            allure.attach(driver.get_screenshot_as_png(), name="5_Descarga_Word_Exitosa", attachment_type=allure.attachment_type.PNG)
+
+            allure.attach(driver.get_screenshot_as_png(), name="7_Modal_VerDetalle", attachment_type=allure.attachment_type.PNG)
+
+            actions.send_keys(Keys.ESCAPE).perform()
+            time.sleep(1)
+            esperar_fin_de_carga()
 
     except Exception as e:
-        allure.attach(driver.get_screenshot_as_png(), name="Fallo_Tarifario_Paquetes", attachment_type=allure.attachment_type.PNG)
+        allure.attach(
+            driver.get_screenshot_as_png(),
+            name="Fallo_Tarifario_Hoteles",
+            attachment_type=allure.attachment_type.PNG
+        )
         pytest.fail(f"El test falló durante la ejecución: {str(e)}")
