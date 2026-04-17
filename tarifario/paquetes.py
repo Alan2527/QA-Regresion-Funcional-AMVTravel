@@ -155,7 +155,7 @@ def test_tarifario_hoteles(logged_in_driver):
 
             # CORRECCIÓN AQUÍ: Usamos la clase específica provista para la habitación
             btn_habitacion = wait.until(EC.presence_of_element_located((
-                By.CSS_SELECTOR, "a.tariff-detail-group-tours"
+                By.CSS_SELECTOR, "a[id^='accordeon-header-']"
             )))
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_habitacion)
             time.sleep(1)
