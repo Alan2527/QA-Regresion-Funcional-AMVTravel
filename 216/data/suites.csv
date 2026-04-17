@@ -1,0 +1,11 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
+1. Login y navegación a la solapa Paquetes.
+2. Búsqueda con destino Buenos Aires.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación Independiente del botón de Descarga de archivo.
+7. Validación Independiente del modal ""Ver Detalle"".
+","45208","test_tarifario_hoteles","tarifario","Fri Apr 17 13:38:13 UTC 2026","failed","Fri Apr 17 13:38:58 UTC 2026","","paquetes","",""
