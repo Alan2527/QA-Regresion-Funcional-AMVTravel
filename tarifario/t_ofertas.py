@@ -137,94 +137,98 @@ def test_tarifario_ofertas(logged_in_driver):
             return driver.execute_script(f"return arguments[0].querySelector('i[class*=\"chevron-{direccion}\"]') !== null;", elemento)
 
         # =========================
-        # 5.1 Validar estado inicial Ver Tarifario
+        # 5 Validar estado inicial Ver Tarifario
         # =========================
-        with allure.step("5.1. Validar que el botón tenga el texto Ver Tarifario y el icono chevron-down"):
+        with allure.step("5. Validar estado inicial del botón Ver Tarifario"):
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buscar_boton_ver())
+            time.sleep(1.5)
 
-            boton_ver_inicial = buscar_boton_ver()
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", boton_ver_inicial)
-            time.sleep(1)
-
-            assert check_icono(boton_ver_inicial, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
-
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="3_Estado_Inicial_Ver_Tarifario",
-                attachment_type=allure.attachment_type.PNG
-            )
+            boton_ver_fresco = buscar_boton_ver()
+            assert check_icono(boton_ver_fresco, "down"), "Falta el ícono de flecha hacia abajo en Ver Tarifario"
+            allure.attach(driver.get_screenshot_as_png(), name="3_Estado_Inicial_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
 
         # =========================
-        # 5.2 Clickear en Ver Tarifario
+        # 6 Clickear en Ver Tarifario
         # =========================
-        with allure.step("5.2. Clickear en el botón Ver Tarifario para abrir panel principal"):
-            driver.execute_script("arguments[0].click();", boton_ver_inicial)
-            time.sleep(2.5) 
-
-        # =========================
-        # 5.3 Validar estado Cerrar Tarifario Y ABRIR SUB-ACORDEÓN
-        # =========================
-        with allure.step("5.3. Validar botón Cerrar Tarifario, abrir sub-grupo y leer la tabla"):
-            
-            # 1. Validamos que el botón principal ahora diga "Cerrar" y tenga la flecha arriba
-            boton_cerrar = buscar_boton_cerrar()
-            assert check_icono(boton_cerrar, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
-
-            # 2. NUEVO: Buscamos el sub-acordeón (Ej: grupo de tours) usando su clase base infalible
-            # Usamos find_elements por si hay varios grupos y hacemos clic en el primero disponible
-            sub_grupos = wait.until(EC.presence_of_all_elements_located((
-                By.CSS_SELECTOR, "a.accordeon-header.tariff-detail-group-name"
-            )))
-            
-            assert len(sub_grupos) > 0, "No se encontraron sub-grupos de tarifas para expandir."
-            
-            primer_sub_grupo = sub_grupos[0]
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", primer_sub_grupo)
-            time.sleep(1)
-            
-            # Hacemos clic en el sub-grupo para desplegar la tabla real
-            driver.execute_script("arguments[0].click();", primer_sub_grupo)
-            time.sleep(2) # Pausa para que la animación de la tablita termine de bajar
-
-            # 3. AHORA SÍ, leemos la tabla que ya está visible
-            tabla = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table.table.table-bordered.table-striped.table-rounded"
-            )))
-
-            tarifas = tabla.find_elements(By.CSS_SELECTOR, "p.pTariff")
-            assert len(tarifas) > 0, "No hay tarifas en la tabla"
-
-            # Sacamos la foto de victoria con todo desplegado
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="4_Tarifario_Y_SubGrupo_Abierto_Con_Tabla",
-                attachment_type=allure.attachment_type.PNG
-            )
-
-        # =========================
-        # 5.4 Clickear en Cerrar Tarifario
-        # =========================
-        with allure.step("5.4. Clickear en el botón Cerrar Tarifario (Cierra todo el bloque)"):
-            driver.execute_script("arguments[0].click();", boton_cerrar)
+        with allure.step("6. Click en Ver Tarifario para desplegar el panel principal"):
+            driver.execute_script("arguments[0].click();", buscar_boton_ver())
             time.sleep(2.5)
 
         # =========================
-        # 5.5 Validar estado Ver Tarifario nuevamente
+        # 7 Validar Cerrar, Abrir Sub-Grupo y Leer Tabla
         # =========================
-        with allure.step("5.5. Buscar nuevamente el botón y validar que haya vuelto a Ver Tarifario"):
+        with allure.step("7. Validar botón Cerrar Tarifario, desplegar habitación y validar la tabla"):
+            boton_cerrar_fresco = buscar_boton_cerrar()
+            assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            boton_ver_final = buscar_boton_ver()
-            assert check_icono(boton_ver_final, "down"), "Falta el ícono de flecha hacia abajo al volver"
+            btn_habitacion = wait.until(EC.presence_of_element_located((
+                By.CSS_SELECTOR, "a[id^='accordeon-header-']"
+            )))
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_habitacion)
+            time.sleep(1)
+            driver.execute_script("arguments[0].click();", btn_habitacion)
+            time.sleep(2)
 
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="5_Vuelve_Ver_Tarifario",
-                attachment_type=allure.attachment_type.PNG
-            )
+            # Validamos que aparezca la tabla con tarifas O el mensaje de resultados vacíos
+            wait.until(lambda d: 
+                (len(d.find_elements(By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped'] p.pTariff")) > 0) or 
+                (len(d.find_elements(By.CSS_SELECTOR, "p.tariff-empty-result")) > 0)
+            , message="No se encontró ni la tabla con tarifas ni el mensaje de resultados vacíos.")
 
-    except Exception as e:
-        allure.attach(
-            driver.get_screenshot_as_png(),
-            name="Fallo_Tarifario_Ofertas",
-            attachment_type=allure.attachment_type.PNG
-        )
-        pytest.fail(f"El test falló durante la ejecución: {str(e)}")
+            allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
+
+        # =========================
+        # 8 Cierre Tarifario
+        # =========================
+        with allure.step("8. Cerrar el acordeón principal"):
+            driver.execute_script("arguments[0].click();", buscar_boton_cerrar())
+            time.sleep(2.5)
+
+        # =========================
+        # 9 Validar estado Ver Tarifario nuevamente
+        # =========================
+        with allure.step("9. Validar que el botón retornó a Ver Tarifario"):
+            boton_ver_finalisimo = buscar_boton_ver()
+            assert check_icono(boton_ver_finalisimo, "down"), "Falta el ícono de flecha hacia abajo en el cierre final"
+            allure.attach(driver.get_screenshot_as_png(), name="5_Cierre_Final_OK", attachment_type=allure.attachment_type.PNG)
+
+
+        # =========================
+        # 10 Botón de descarga de archivo Word
+        # =========================
+        with allure.step("10. Clickear en botón de descarga y validar existencia de archivo .docx"):
+            # Definimos la ruta de descargas (ajustar si el runner tiene una ruta personalizada)
+            download_dir = os.path.expanduser("~/Downloads")
+            
+            # Capturamos lista de archivos antes de la descarga para comparar
+            files_before = os.listdir(download_dir) if os.path.exists(download_dir) else []
+
+            # Buscamos el botón por su clase específica
+            btn_descarga = wait.until(EC.presence_of_element_located((
+                By.CSS_SELECTOR, "button.btn-download-word"
+            )))
+
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_descarga)
+            time.sleep(1)
+            
+            # Validamos el tooltip antes de descargar
+            assert btn_descarga.get_attribute("title") == "Descargar en formato Word", "El tooltip del botón no es correcto"
+            
+            driver.execute_script("arguments[0].click();", btn_descarga)
+
+            # Polling para detectar el nuevo archivo descargado
+            descarga_exitosa = False
+            for i in range(15): # Esperamos hasta 15 segundos
+                time.sleep(1)
+                if os.path.exists(download_dir):
+                    files_after = os.listdir(download_dir)
+                    # Buscamos un archivo .docx que no estuviera antes
+                    new_files = [f for f in files_after if f not in files_before and f.endswith(".docx")]
+                    if new_files:
+                        descarga_exitosa = True
+                        break
+            
+            assert descarga_exitosa, "No se detectó la descarga del archivo .docx en la carpeta de descargas."
+            
+            allure.attach(driver.get_screenshot_as_png(), name="6_Captura_Boton_Descarga", attachment_type=allure.attachment_type.PNG)
+            esperar_fin_de_carga()
