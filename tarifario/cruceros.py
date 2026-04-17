@@ -10,18 +10,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.feature("Tarifario")
 @allure.story("Consulta de Cruceros - Flujo Funcional")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.description("""
-Flujo de prueba siguiendo los 9 pasos definidos:
-1. Login.
-2. Navegación a solapa Cruceros.
-3. Filtro por ciudad Ushuaia.
-4. Validación de resultados de búsqueda.
-5. Verificación de texto inicial botón 'Ver Tarifario'.
-6. Apertura y verificación de botón 'Cerrar Tarifario'.
-7. Validación de tabla de tarifas (con espera dinámica de contenido).
-8. Cierre y verificación de retorno a botón 'Ver Tarifario'.
-9. Validación de iconos y tooltips.
-""")
 def test_tarifario_cruceros(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 20)
@@ -39,7 +27,7 @@ def test_tarifario_cruceros(logged_in_driver):
 
     try:
         # ==========================================
-        # 1. LOGIN (Manejado por el fixture)
+        # 1. LOGIN (Fixture)
         # ==========================================
 
         # ==========================================
@@ -81,11 +69,12 @@ def test_tarifario_cruceros(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="2_Resultados_Busqueda", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # 5. VALIDAR BOTÓN "VER TARIFARIO"
+        # 5. VALIDAR BOTÓN "VER TARIFARIO" (Usando Clase)
         # ==========================================
         with allure.step("5. Validar existencia del botón 'Ver Tarifario'"):
+            # Usamos la clase provista por Alan para mayor precisión
             btn_ver = wait.until(lambda d: d.execute_script("""
-                return [...document.querySelectorAll('a')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
+                return [...document.querySelectorAll('.tariff-view-table')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
             """))
             assert "ver" in btn_ver.get_attribute("innerText").lower()
             allure.attach(driver.get_screenshot_as_png(), name="3_Boton_Ver_Tarifario", attachment_type=allure.attachment_type.PNG)
@@ -94,12 +83,19 @@ def test_tarifario_cruceros(logged_in_driver):
         # 6. CLICK Y VALIDAR "CERRAR TARIFARIO"
         # ==========================================
         with allure.step("6. Click en Ver y validar cambio a 'Cerrar Tarifario'"):
+            # Aseguramos visibilidad y foco antes del click
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_ver)
+            time.sleep(1)
+            
+            # Click via JS para evitar intercepciones
             driver.execute_script("arguments[0].click();", btn_ver)
             esperar_fin_de_carga()
             
+            # Esperamos que el MISMO botón (por clase) cambie su texto a "Cerrar"
             btn_cerrar = wait.until(lambda d: d.execute_script("""
-                return [...document.querySelectorAll('a')].find(a => a.innerText.toLowerCase().includes('cerrar tarifario'));
-            """))
+                return [...document.querySelectorAll('.tariff-view-table')].find(a => a.innerText.toLowerCase().includes('cerrar tarifario'));
+            """), message="El botón no cambió a 'Cerrar Tarifario' después del clic.")
+            
             assert "cerrar" in btn_cerrar.get_attribute("innerText").lower()
             allure.attach(driver.get_screenshot_as_png(), name="4_Boton_Cerrar_Tarifario", attachment_type=allure.attachment_type.PNG)
 
@@ -107,29 +103,27 @@ def test_tarifario_cruceros(logged_in_driver):
         # 7. VALIDAR TABLA DE TARIFARIO
         # ==========================================
         with allure.step("7. Validar tabla de tarifas"):
-            # Pequeño scroll para asegurar visibilidad
-            driver.execute_script("window.scrollBy(0, 250);")
+            driver.execute_script("window.scrollBy(0, 300);") # Scroll para ver la tabla
             time.sleep(1)
 
             tabla = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped']"
             )))
             
-            # SOLUCIÓN AL ERROR 0 > 0: Espera dinámica a que los precios carguen dentro de la tabla
+            # Espera dinámica para que carguen los precios (p.pTariff)
             p_tariffs = wait.until(lambda d: tabla.find_elements(By.CSS_SELECTOR, "p.pTariff"))
-            
-            assert len(p_tariffs) > 0, "Se abrió la tabla pero no se encontraron elementos pTariff (precios)."
-            allure.attach(driver.get_screenshot_as_png(), name="5_Tabla_Tarifas_Cargada", attachment_type=allure.attachment_type.PNG)
+            assert len(p_tariffs) > 0, "Tabla abierta pero vacía de tarifas."
+            allure.attach(driver.get_screenshot_as_png(), name="5_Tabla_Tarifas", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
         # 8. CERRAR Y VALIDAR RETORNO A "VER"
         # ==========================================
         with allure.step("8. Click en Cerrar y validar retorno a 'Ver Tarifario'"):
             driver.execute_script("arguments[0].click();", btn_cerrar)
-            time.sleep(2) # Tiempo para animación de cierre
+            time.sleep(2)
             
             btn_vuelta = wait.until(lambda d: d.execute_script("""
-                return [...document.querySelectorAll('a')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
+                return [...document.querySelectorAll('.tariff-view-table')].find(a => a.innerText.toLowerCase().includes('ver tarifario'));
             """))
             assert "ver" in btn_vuelta.get_attribute("innerText").lower()
             allure.attach(driver.get_screenshot_as_png(), name="6_Boton_Vuelta_Ver", attachment_type=allure.attachment_type.PNG)
@@ -138,7 +132,7 @@ def test_tarifario_cruceros(logged_in_driver):
         # 9. VALIDAR ICONOS Y TOOLTIPS
         # ==========================================
         with allure.step("9. Validar iconos y tooltips"):
-            # Re-abrimos para que los iconos sean visibles en la captura
+            # Re-abrimos para que los iconos existan en el DOM
             driver.execute_script("arguments[0].click();", btn_vuelta)
             esperar_fin_de_carga()
             
@@ -148,5 +142,5 @@ def test_tarifario_cruceros(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Final", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
-        allure.attach(driver.get_screenshot_as_png(), name="ERROR_CRITICO_CRUCEROS", attachment_type=allure.attachment_type.PNG)
-        pytest.fail(f"Error en el flujo de Cruceros: {str(e)}")
+        allure.attach(driver.get_screenshot_as_png(), name="ERROR_CRUCEROS", attachment_type=allure.attachment_type.PNG)
+        pytest.fail(f"Fallo en el flujo: {str(e)}")
