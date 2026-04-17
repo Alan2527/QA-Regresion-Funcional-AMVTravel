@@ -1,0 +1,9 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo de Tarifario - Cruceros:
+1. Login y navegación a Cruceros.
+2. Búsqueda con destino Ushuaia.
+3. Validación de botón Ver Tarifario (usando selectores de clase).
+4. Apertura de tabla y validación de contenido.
+5. Validación de modales (Proveedores y Detalle).
+","20476","test_tarifario_cruceros","tarifario","Fri Apr 17 12:14:29 UTC 2026","failed","Fri Apr 17 12:14:50 UTC 2026","","cruceros","",""
