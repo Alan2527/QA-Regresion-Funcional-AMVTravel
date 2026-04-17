@@ -8,11 +8,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 @allure.feature("Tarifario")
-@allure.story("Consulta de Hoteles Completa (Tags, Tarifas y Modales)")
+@allure.story("Consulta de Cruceros Completa (Tarifas y Modales)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
 Este caso de prueba cubre el flujo completo de Tarifario - Cruceros:
-1. Login y navegación a la solapa Hoteles.
+1. Login y navegación a la solapa Cruceros.
 2. Búsqueda con destino Ushuaia.
 3. Validación del estado inicial del botón Ver Tarifario.
 4. Apertura del panel principal y validación de la tabla de tarifas.
@@ -65,7 +65,7 @@ def test_tarifario_cruceros(logged_in_driver):
         # =========================
         # 1-2 Navegación
         # =========================
-        with allure.step("1 a 2. Navegar a Tarifario y solapa Hoteles"):
+        with allure.step("1 a 2. Navegar a Tarifario y solapa Cruceros"):
             btn_tarifario = wait.until(EC.element_to_be_clickable((
                 By.CSS_SELECTOR, "a[href*='defaulttariff.aspx']"
             )))
@@ -242,7 +242,7 @@ def test_tarifario_cruceros(logged_in_driver):
     except Exception as e:
         allure.attach(
             driver.get_screenshot_as_png(),
-            name="Fallo_Tarifario_Hoteles",
+            name="Fallo_Tarifario_Cruceros",
             attachment_type=allure.attachment_type.PNG
         )
         pytest.fail(f"El test falló durante la ejecución: {str(e)}")
