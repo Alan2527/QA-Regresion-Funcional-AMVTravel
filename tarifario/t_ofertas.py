@@ -1,3 +1,4 @@
+import os  # Agregado para validar la descarga de archivos
 import time
 import pytest
 import allure
@@ -197,7 +198,7 @@ def test_tarifario_ofertas(logged_in_driver):
         # 10 Botón de descarga de archivo Word
         # =========================
         with allure.step("10. Clickear en botón de descarga y validar existencia de archivo .docx"):
-            # Definimos la ruta de descargas (ajustar si el runner tiene una ruta personalizada)
+            # Definimos la ruta de descargas
             download_dir = os.path.expanduser("~/Downloads")
             
             # Capturamos lista de archivos antes de la descarga para comparar
@@ -232,3 +233,11 @@ def test_tarifario_ofertas(logged_in_driver):
             
             allure.attach(driver.get_screenshot_as_png(), name="6_Captura_Boton_Descarga", attachment_type=allure.attachment_type.PNG)
             esperar_fin_de_carga()
+
+    except Exception as e:
+        allure.attach(
+            driver.get_screenshot_as_png(),
+            name="Fallo_Tarifario_Ofertas",
+            attachment_type=allure.attachment_type.PNG
+        )
+        pytest.fail(f"El test falló durante la ejecución: {str(e)}")
