@@ -18,7 +18,7 @@ Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
 3. Validación del estado inicial del botón Ver Tarifario.
 4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
 5. Cierre del panel y validación del retorno al estado inicial.
-6. Validación Independiente del botón de Descarga de archivo.
+6. Validación Independiente del botón de Descarga de archivo (y existencia del archivo en la carpeta de descargas).
 7. Validación Independiente del modal "Ver Detalle".
 """)
 def test_tarifario_hoteles(logged_in_driver):
