@@ -1,6 +1,7 @@
 import pytest
 import allure
 import time
+import os  # Agregado para validar la existencia del archivo en el sistema
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -153,7 +154,6 @@ def test_tarifario_hoteles(logged_in_driver):
             boton_cerrar_fresco = buscar_boton_cerrar()
             assert check_icono(boton_cerrar_fresco, "up"), "Falta el ícono de flecha hacia arriba en Cerrar Tarifario"
 
-            # CORRECCIÓN AQUÍ: Usamos la clase específica provista para la habitación
             btn_habitacion = wait.until(EC.presence_of_element_located((
                 By.CSS_SELECTOR, "a[id^='accordeon-header-']"
             )))
@@ -187,29 +187,43 @@ def test_tarifario_hoteles(logged_in_driver):
 
 
         # =========================
-        # 10 Modal Proveedores
+        # 10 Botón de descarga de archivo Word
         # =========================
-        with allure.step("10. Abrir modal de Proveedores"):
+        with allure.step("10. Clickear en botón de descarga y validar existencia de archivo .docx"):
+            # Definimos la ruta de descargas (ajustar si el runner tiene una ruta personalizada)
+            download_dir = os.path.expanduser("~/Downloads")
+            
+            # Capturamos lista de archivos antes de la descarga para comparar
+            files_before = os.listdir(download_dir) if os.path.exists(download_dir) else []
+
+            # Buscamos el botón por su clase específica
             btn_descarga = wait.until(EC.presence_of_element_located((
-                By.XPATH, "(//button[contains(text(), 'Ver Proveedores') or contains(@onclick, 'openSuppliersModal')])[1]"
+                By.CSS_SELECTOR, "button.btn-download-word"
             )))
 
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_descarga)
-            time.sleep(0.5)
+            time.sleep(1)
+            
+            # Validamos el tooltip antes de descargar
+            assert btn_descarga.get_attribute("title") == "Descargar en formato Word", "El tooltip del botón no es correcto"
+            
             driver.execute_script("arguments[0].click();", btn_descarga)
 
-            modal_prov = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, ".modal.show, .modal.in, #suppliersModal"
-            )))
-            time.sleep(3)
-
-            tds = modal_prov.find_elements(By.TAG_NAME, "td")
-            assert any(td.text.strip() != "" for td in tds), "La tabla de proveedores cargó vacía."
-
-            allure.attach(driver.get_screenshot_as_png(), name="6_Modal_Proveedores", attachment_type=allure.attachment_type.PNG)
-
-            actions.send_keys(Keys.ESCAPE).perform()
-            time.sleep(1.5)
+            # Polling para detectar el nuevo archivo descargado
+            descarga_exitosa = False
+            for i in range(15): # Esperamos hasta 15 segundos
+                time.sleep(1)
+                if os.path.exists(download_dir):
+                    files_after = os.listdir(download_dir)
+                    # Buscamos un archivo .docx que no estuviera antes
+                    new_files = [f for f in files_after if f not in files_before and f.endswith(".docx")]
+                    if new_files:
+                        descarga_exitosa = True
+                        break
+            
+            assert descarga_exitosa, "No se detectó la descarga del archivo .docx en la carpeta de descargas."
+            
+            allure.attach(driver.get_screenshot_as_png(), name="6_Captura_Boton_Descarga", attachment_type=allure.attachment_type.PNG)
             esperar_fin_de_carga()
 
         # =========================
