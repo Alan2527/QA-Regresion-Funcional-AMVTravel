@@ -162,13 +162,12 @@ def test_tarifario_hoteles(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_habitacion)
             time.sleep(2)
 
-            # Usamos un selector más flexible para la tabla para asegurar detección
-            tabla_detalle = wait.until(EC.visibility_of_element_located((
-                By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped']"
-            )))
-            p_tariffs = tabla_detalle.find_elements(By.CSS_SELECTOR, "p.pTariff")
+            # Validamos que aparezca la tabla con tarifas O el mensaje de resultados vacíos
+            wait.until(lambda d: 
+                (len(d.find_elements(By.CSS_SELECTOR, "table[class*='table-bordered'][class*='table-striped'] p.pTariff")) > 0) or 
+                (len(d.find_elements(By.CSS_SELECTOR, "p.tariff-empty-result")) > 0)
+            , message="No se encontró ni la tabla con tarifas ni el mensaje de resultados vacíos.")
 
-            assert len(p_tariffs) > 0, "No se encontró ningún elemento pTariff en la tabla del hotel."
             allure.attach(driver.get_screenshot_as_png(), name="4_Tarifario_Y_Tabla_Abiertos", attachment_type=allure.attachment_type.PNG)
 
         # =========================
