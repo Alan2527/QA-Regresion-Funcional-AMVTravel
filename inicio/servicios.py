@@ -12,7 +12,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 @allure.story("Búsqueda, filtrado y reserva de excursión en Bariloche")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.description("""
-Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un servicio:
+Este caso de prueba cubre el flujo End-to-End (E2E) completo de la reserva de un servicio:
 1. Login silencioso y navegación a la pestaña de Servicios.
 2. Búsqueda filtrada por Destino (Bariloche) y Tipo (Excursión).
 3. Validación de la interfaz (UI) en las cards de resultados y el detalle interno.
@@ -23,10 +23,10 @@ Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un servicio
 def test_reserva_servicio_flujo_completo(logged_in_driver):
     driver = logged_in_driver
     wait = WebDriverWait(driver, 15)
-    actions = ActionChains(driver) # Aseguramos que actions esté disponible
+    actions = ActionChains(driver)
 
     # =========================================================================
-    # PASOS ORIGINALES (MANTENIDOS SIN CAMBIOS)
+    # PASOS ORIGINALES (RESTAURADOS AL 100%)
     # =========================================================================
     with allure.step("1 a 5. Seleccionar pestaña Servicios, ingresar destino, tipo y buscar"):
         try:
@@ -94,9 +94,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
                 lambda d: int(d.find_element(By.ID, "lblCartCount").text.strip() or 0) == expected_count,
                 message=f"La reserva falló: El carrito no se actualizó al valor esperado ({expected_count})"
             )
-            
             allure.attach(driver.get_screenshot_as_png(), name="Reserva_Exitosa_Carrito_Actualizado", attachment_type=allure.attachment_type.PNG)
-            
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Validacion_Carrito", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Fallo la validación final del carrito. Detalle: {str(e)}")
@@ -105,64 +103,53 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
     # NUEVOS PASOS (CHECKOUT Y FINALIZACIÓN)
     # =========================================================================
 
-    with allure.step("8. Desplegar carrito y clickear Finalizar"):
+    with allure.step("8. Ir al carrito y Finalizar"):
         cart_anchor = wait.until(EC.visibility_of_element_located((By.ID, "AncoreShoppingCart")))
         actions.move_to_element(cart_anchor).perform()
         time.sleep(1)
-        
         btn_finalizar = wait.until(EC.element_to_be_clickable((By.ID, "btnFinalizar")))
-        allure.attach(driver.get_screenshot_as_png(), name="8_Carrito_Desplegado", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="8_Dropdown_Carrito", attachment_type=allure.attachment_type.PNG)
         btn_finalizar.click()
 
     with allure.step("9. Completar Referencia y Comentarios"):
-        # Validar tabla
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "table-striped")))
         
-        # Completar Referencia
         driver.find_element(By.NAME, "ctl00$cphMain$txtReference").send_keys("Test Automático")
         
-        # Comentario con fecha dinámica
         fecha_actual = datetime.now().strftime("%d/%m/%Y")
         msg = f"Este es un test autómatico ejecutado el día {fecha_actual}"
         driver.find_element(By.NAME, "ctl00$cphMain$txtComment").send_keys(msg)
         
-        allure.attach(driver.get_screenshot_as_png(), name="9_Referencia_y_Comentarios", attachment_type=allure.attachment_type.PNG)
-        
-        # Click en Continuar (btn success apreload)
-        driver.find_element(By.CSS_SELECTOR, "a.btn.btn-success.apreload").click()
+        allure.attach(driver.get_screenshot_as_png(), name="9_Checkout_Referencia", attachment_type=allure.attachment_type.PNG)
+        driver.find_element(By.CLASS_NAME, "apreload").click()
 
     with allure.step("10. Cargar Datos de Pasajeros y Comentarios de Servicio"):
-        # Validar tabla cargada
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "table-striped")))
         
-        # Comentarios por servicio
+        # Comentarios específicos por servicio
         driver.find_element(By.NAME, "ctl00$cphMain$lvBooking$ctrl0$ctrlBookingServiceDetailControl$txtDetail").send_keys("Comentario 1")
         driver.find_element(By.NAME, "ctl00$cphMain$lvBooking$ctrl1$ctrlBookingServiceDetailControl$txtDetail").send_keys("Comentario 2")
         
-        # Datos Pasajero Alan QA
+        # Datos del Pasajero Alan QA
         driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtName").send_keys("Alan")
         driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtSurName").send_keys("QA")
         driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtPassport").send_keys("PAS123456789")
         driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtBirthday").send_keys("02061990")
         driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtNationality").send_keys("Argentino")
         
-        # Pax Quantity y Términos
-        pax_q = driver.find_element(By.ID, "ctl00_cphMain_txtPaxQuantity")
-        pax_q.clear()
-        pax_q.send_keys("2")
+        # Cantidad de Pax y Términos
+        input_pax_final = driver.find_element(By.ID, "ctl00_cphMain_txtPaxQuantity")
+        input_pax_final.clear()
+        input_pax_final.send_keys("2")
         
         checkbox = driver.find_element(By.ID, "ctl00_cphMain_cbxTermsAndConditions")
         if not checkbox.is_selected():
             checkbox.click()
             
-        allure.attach(driver.get_screenshot_as_png(), name="10_Carga_Pasajeros_Final", attachment_type=allure.attachment_type.PNG)
-        
-        # Guardar Reserva
+        allure.attach(driver.get_screenshot_as_png(), name="10_Datos_Pax_Completos", attachment_type=allure.attachment_type.PNG)
         driver.find_element(By.ID, "ctl00_cphMain_btnSaveBook").click()
 
-    with allure.step("11. Validar Éxito de Reserva"):
-        # Esperar y validar tablas de confirmación
+    with allure.step("11. Validación Final"):
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "table-striped")))
         wait.until(EC.presence_of_element_located((By.ID, "tableTab2")))
-        
-        allure.attach(driver.get_screenshot_as_png(), name="11_Reserva_Finalizada_OK", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), name="11_Reserva_Finalizada", attachment_type=allure.attachment_type.PNG)
