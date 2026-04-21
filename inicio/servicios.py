@@ -30,7 +30,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             # 2. Click en la pestaña de Servicios
             tab_servicios = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='#tabServices']")), message="No se encontró la pestaña a[href='#tabServices']")
             tab_servicios.click()
-            time.sleep(1) 
+            time.sleep(1)
 
             # 3. Dropdown Destino (Ciudad)
             btn_ciudad = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_updServicesCity .ts-control")), message="No se encontró el control del DDL de Ciudad")
@@ -53,12 +53,12 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
             # 5. Click en Buscar
             wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMainSlider_ctl00_ctrlServiceSearchControl_btnSearch")), message="No se encontró el botón de Buscar (btnSearch)").click()
-            
+
             # Espera larga para los resultados
             wait_largo = WebDriverWait(driver, 45)
             wait_largo.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.panelShadow.col-sm-6")), message="La búsqueda superó los 45 segundos y no cargaron los resultados de servicios")
             time.sleep(2)
-            
+
             allure.attach(driver.get_screenshot_as_png(), name="Busqueda_Ejecutada", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_1_a_5", attachment_type=allure.attachment_type.PNG)
@@ -68,14 +68,14 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
         try:
             # a. Validar que exista la card
             assert driver.find_elements(By.CSS_SELECTOR, "div.panelShadow.col-sm-6"), "No se encontró ningún div con la clase 'panelShadow col-sm-6'"
-            
+
             # b, c, d, e, f. Validar componentes internos de la card
             assert driver.find_elements(By.CSS_SELECTOR, "img[style*='width: 450px']"), "Falta la imagen de 450x323px en la card"
             assert driver.find_elements(By.CSS_SELECTOR, "h4.h4Span"), "Falta el nombre del servicio (h4Span)"
             assert driver.find_elements(By.CSS_SELECTOR, "table[style*='text-align:center'], table[style*='text-align: center']"), "Falta la tabla de precios/tipo centrada"
             assert driver.find_elements(By.CSS_SELECTOR, "div.divservlimit"), "Falta la descripción del servicio (divservlimit)"
             assert driver.find_elements(By.CSS_SELECTOR, "a.apreload.btn.btnGray.pink-btn"), "Falta el botón de selección/ver más"
-            
+
             allure.attach(driver.get_screenshot_as_png(), name="Resultados_Validados", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Paso_6", attachment_type=allure.attachment_type.PNG)
@@ -108,7 +108,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             # 10. Segundo select (Pax 2)
             select_pax_2 = Select(wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMainSlider$lvServiceRates$ctrl1$ctrlPaxQuantityControl$ddPax")), message="No se encontró el segundo DDL de pasajeros"))
             select_pax_2.select_by_visible_text("2")
-            
+
             time.sleep(1)
             allure.attach(driver.get_screenshot_as_png(), name="Pasajeros_Seleccionados", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
@@ -140,10 +140,10 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
                 lambda d: int(d.find_element(By.ID, "lblCartCount").text.strip() or 0) == expected_count,
                 message=f"La reserva falló: El carrito no se actualizó al valor esperado ({expected_count})"
             )
-            
+
             # 5. Captura de éxito
             allure.attach(driver.get_screenshot_as_png(), name="Reserva_Exitosa_Carrito_Actualizado", attachment_type=allure.attachment_type.PNG)
-            
+
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Validacion_Carrito", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Ocurrió un error al validar el carrito. Detalle: {str(e)}")
@@ -184,14 +184,12 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
     with allure.step("15. Cargar Comentarios de Servicio y Datos de Pasajeros"):
         try:
-            # AGREGADO: Más tiempo para que termine de cargar la pantalla post-click
-            time.sleep(3) 
+            time.sleep(3)
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")))
 
-            # AGREGADO: Wait explícito asegurando que el input esté presente en el DOM antes de escribir
             input_comentario1 = wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMain$lvBooking$ctrl0$ctrlBookingServiceDetailControl$txtDetail")))
             input_comentario1.send_keys("Comentario 1")
-            
+
             driver.find_element(By.NAME, "ctl00$cphMain$lvBooking$ctrl1$ctrlBookingServiceDetailControl$txtDetail").send_keys("Comentario 2")
 
             driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtName").send_keys("Alan")
@@ -210,16 +208,23 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
             allure.attach(driver.get_screenshot_as_png(), name="Datos_Pasajeros_Completos", attachment_type=allure.attachment_type.PNG)
 
-            driver.find_element(By.ID, "ctl00_cphMain_btnSaveBook").click()
+            # SCROLL PREVIO AL CLICK COMO SUGERISTE
+            btn_guardar = driver.find_element(By.ID, "ctl00_cphMain_btnSaveBook")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_guardar)
+            time.sleep(1) # Pequeña pausa post-scroll para que asimile la posición
+            btn_guardar.click()
+            
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Datos_Pasajeros", attachment_type=allure.attachment_type.PNG)
             pytest.fail(f"Error al cargar datos del pasajero: {str(e)}")
 
     with allure.step("16. Validación final de éxito"):
         try:
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")))
-            wait.until(EC.presence_of_element_located((By.ID, "tableTab2")))
-            
+            # WAIT EXTENDIDO (60s): La generación de la reserva toma tiempo
+            wait_largo = WebDriverWait(driver, 60)
+            wait_largo.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")))
+            wait_largo.until(EC.presence_of_element_located((By.ID, "tableTab2")))
+
             allure.attach(driver.get_screenshot_as_png(), name="Reserva_Finalizada_Exito", attachment_type=allure.attachment_type.PNG)
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Validacion_Final", attachment_type=allure.attachment_type.PNG)
