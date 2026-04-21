@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 @allure.feature("Reservar Servicios")
 @allure.story("Búsqueda, filtrado y reserva de excursión en Bariloche")
@@ -208,20 +209,21 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
             allure.attach(driver.get_screenshot_as_png(), name="Datos_Pasajeros_Completos", attachment_type=allure.attachment_type.PNG)
 
-            # === SCROLL CON OFFSET Y CLICK JS ===
-            # 1. Obtenemos el elemento
-            btn_guardar = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_btnSaveBook")))
+            # === SCROLL EXTREMO Y CLICK ===
+            # Simular tecla "FIN" en el body para bajar la pantalla globalmente
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.END)
+            # Refuerzo extra de scroll hacia el final
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2) 
+
+            # Buscar el botón con tu combinación exacta de datos
+            btn_guardar = wait.until(EC.presence_of_element_located((
+                By.XPATH, "//input[@id='ctl00_cphMain_btnSaveBook' and @type='button' and @value='Confirmar reserva']"
+            )))
             
-            # 2. Scrolleamos hacia el elemento
-            driver.execute_script("arguments[0].scrollIntoView(true);", btn_guardar)
-            
-            # 3. Hacemos un scroll inverso de 150px para "despegarlo" de la barra inferior
-            driver.execute_script("window.scrollBy(0, -150);")
-            time.sleep(1.5) 
-            
-            # 4. Forzamos el click ignorando la capa visual
+            # Forzamos el click a nivel de JavaScript ignorando capas frontales
             driver.execute_script("arguments[0].click();", btn_guardar)
-            # ====================================
+            # ==============================
             
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Datos_Pasajeros", attachment_type=allure.attachment_type.PNG)
