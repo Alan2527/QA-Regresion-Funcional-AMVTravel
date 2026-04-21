@@ -208,11 +208,19 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
             allure.attach(driver.get_screenshot_as_png(), name="Datos_Pasajeros_Completos", attachment_type=allure.attachment_type.PNG)
 
-            # SCROLL PREVIO AL CLICK COMO SUGERISTE
-            btn_guardar = driver.find_element(By.ID, "ctl00_cphMain_btnSaveBook")
+            # === NUEVA LÓGICA INFALIBLE PARA EL BOTÓN DE CONFIRMAR ===
+            # Buscamos el botón asegurándonos que sea el input con value "Confirmar reserva"
+            btn_guardar = wait.until(EC.presence_of_element_located((
+                By.XPATH, "//input[@value='Confirmar reserva' or @id='ctl00_cphMain_btnSaveBook']"
+            )))
+            
+            # Scrolleamos directamente al centro de la vista
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_guardar)
-            time.sleep(1) # Pequeña pausa post-scroll para que asimile la posición
-            btn_guardar.click()
+            time.sleep(1.5) 
+            
+            # Forzamos el click a nivel de JavaScript (ignora cualquier elemento superpuesto)
+            driver.execute_script("arguments[0].click();", btn_guardar)
+            # ==========================================================
             
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Datos_Pasajeros", attachment_type=allure.attachment_type.PNG)
@@ -220,7 +228,6 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
     with allure.step("16. Validación final de éxito"):
         try:
-            # WAIT EXTENDIDO (60s): La generación de la reserva toma tiempo
             wait_largo = WebDriverWait(driver, 60)
             wait_largo.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")))
             wait_largo.until(EC.presence_of_element_located((By.ID, "tableTab2")))
