@@ -184,9 +184,14 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
     with allure.step("15. Cargar Comentarios de Servicio y Datos de Pasajeros"):
         try:
+            # AGREGADO: Más tiempo para que termine de cargar la pantalla post-click
+            time.sleep(3) 
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-bordered.table-striped")))
 
-            driver.find_element(By.NAME, "ctl00$cphMain$lvBooking$ctrl0$ctrlBookingServiceDetailControl$txtDetail").send_keys("Comentario 1")
+            # AGREGADO: Wait explícito asegurando que el input esté presente en el DOM antes de escribir
+            input_comentario1 = wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMain$lvBooking$ctrl0$ctrlBookingServiceDetailControl$txtDetail")))
+            input_comentario1.send_keys("Comentario 1")
+            
             driver.find_element(By.NAME, "ctl00$cphMain$lvBooking$ctrl1$ctrlBookingServiceDetailControl$txtDetail").send_keys("Comentario 2")
 
             driver.find_element(By.ID, "ctl00_cphMain_lvPassengersData_ctrl0_txtName").send_keys("Alan")
