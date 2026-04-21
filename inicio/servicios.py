@@ -208,19 +208,20 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
 
             allure.attach(driver.get_screenshot_as_png(), name="Datos_Pasajeros_Completos", attachment_type=allure.attachment_type.PNG)
 
-            # === NUEVA LÓGICA INFALIBLE PARA EL BOTÓN DE CONFIRMAR ===
-            # Buscamos el botón asegurándonos que sea el input con value "Confirmar reserva"
-            btn_guardar = wait.until(EC.presence_of_element_located((
-                By.XPATH, "//input[@value='Confirmar reserva' or @id='ctl00_cphMain_btnSaveBook']"
-            )))
+            # === SCROLL CON OFFSET Y CLICK JS ===
+            # 1. Obtenemos el elemento
+            btn_guardar = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_btnSaveBook")))
             
-            # Scrolleamos directamente al centro de la vista
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_guardar)
+            # 2. Scrolleamos hacia el elemento
+            driver.execute_script("arguments[0].scrollIntoView(true);", btn_guardar)
+            
+            # 3. Hacemos un scroll inverso de 150px para "despegarlo" de la barra inferior
+            driver.execute_script("window.scrollBy(0, -150);")
             time.sleep(1.5) 
             
-            # Forzamos el click a nivel de JavaScript (ignora cualquier elemento superpuesto)
+            # 4. Forzamos el click ignorando la capa visual
             driver.execute_script("arguments[0].click();", btn_guardar)
-            # ==========================================================
+            # ====================================
             
         except Exception as e:
             allure.attach(driver.get_screenshot_as_png(), name="Fallo_Datos_Pasajeros", attachment_type=allure.attachment_type.PNG)
