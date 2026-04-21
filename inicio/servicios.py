@@ -39,7 +39,7 @@ def test_reserva_servicio_flujo_completo(logged_in_driver):
             input_destino.send_keys("Bariloche")
             time.sleep(2)
 
-            option_destino = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'San Carlos de Bariloche, Río Negro, Argentina')]")), message="No se desplegó la opción de Bariloche")
+            option_destino = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Bariloche')]")), message="No se desplegó la opción de Bariloche")
             option_destino.click()
             time.sleep(1)
 
