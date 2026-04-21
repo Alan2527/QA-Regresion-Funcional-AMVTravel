@@ -7,4 +7,4 @@ Este caso de prueba cubre el flujo End-to-End (E2E) completo de la reserva de un
 4. Selección de cantidad de pasajeros.
 5. Confirmación de reserva y validación final comprobando que el carrito sume 4 ítems.
 6. Flujo de Finalización de Compra (Checkout) y carga de datos del pasajero.
-","16776","test_reserva_servicio_flujo_completo","inicio","Tue Apr 21 17:23:52 UTC 2026","failed","Tue Apr 21 17:24:09 UTC 2026","","servicios","",""
+","16746","test_reserva_servicio_flujo_completo","inicio","Tue Apr 21 17:27:18 UTC 2026","failed","Tue Apr 21 17:27:35 UTC 2026","","servicios","",""
