@@ -1,0 +1,98 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un hotel:
+1. Búsqueda interactiva por destino (Bariloche) y selección en calendario.
+2. Configuración compleja de pasajeros (adultos y menores con asignación de edad).
+3. Aplicación de múltiples filtros laterales concurrentes (Zona, Tipo, Amenities).
+4. Validación visual y funcional de la card del hotel y la vista de detalle interno.
+5. Suma de habitaciones y confirmación final de la reserva validando el alert de éxito.
+","58814","test_reserva_hotel_flujo_completo","inicio","Fri Apr 24 11:37:15 UTC 2026","failed","Fri Apr 24 11:38:14 UTC 2026","","hoteles","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
+1. Login y navegación a Excursiones.
+2. Búsqueda con destino Cachi.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-grupos (si existen) y validación de la tabla.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación Independiente del modal ""Ver Proveedores"".
+7. Validación Independiente del modal ""Ver Detalle"".
+8. Validación Independiente de Tooltips (Duración, Idiomas, Operatividad) al final del flujo.
+","50100","test_tarifario","tarifario","Fri Apr 24 11:40:13 UTC 2026","failed","Fri Apr 24 11:41:04 UTC 2026","","excursiones","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Cenashow:
+1. Navegación y búsqueda con destino Cachi.
+2. Validación de estados del botón Ver/Cerrar Tarifario con capturas.
+3. Validación de modal Proveedores (usando selector btn-download-word).
+4. Validación de modal Detalle (idéntico a Hoteles).
+5. Validación de Tooltips al final del flujo.
+","47995","test_tarifario_cenashow","tarifario","Fri Apr 24 11:42:53 UTC 2026","failed","Fri Apr 24 11:43:41 UTC 2026","","cenashow","",""
+"
+Este caso de prueba cubre el flujo de Tarifario - Cruceros:
+1. Login y navegación a Cruceros.
+2. Búsqueda con destino Ushuaia.
+3. Validación de ciclo de vida del botón Ver/Cerrar Tarifario.
+4. Validación de la tabla de tarifas.
+5. Validación de modales (Proveedores y Detalle).
+","20409","test_tarifario_cruceros","tarifario","Fri Apr 24 11:43:48 UTC 2026","failed","Fri Apr 24 11:44:09 UTC 2026","","cruceros","",""
+"
+Este caso de prueba valida el acceso principal al sistema web de reservas con perfil Administrador.
+Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E dependen de una sesión válida con permisos elevados.
+1. Navegación a qa.amv.travel.
+2. Inyección de credenciales seguras mediante GitHub Secrets.
+3. Validación de ingreso exitoso al portal interno.
+4. Validación de perfil Admin comprobando la existencia de los selectores de simulación de agencia.
+","7459","test_login_admin","inicio","Fri Apr 24 11:36:52 UTC 2026","passed","Fri Apr 24 11:37:00 UTC 2026","","login_admin","",""
+"
+Este caso de prueba valida el acceso principal al sistema web de reservas con perfil Agencia.
+1. Navegación a qa.amv.travel.
+2. Inyección de credenciales seguras mediante GitHub Secrets.
+3. Validación de ingreso exitoso al portal interno.
+4. Validación de perfil Agencia comprobando la NO existencia de los selectores de simulación de agencia.
+","7477","test_login_agencia","inicio","Fri Apr 24 11:37:00 UTC 2026","passed","Fri Apr 24 11:37:08 UTC 2026","","login_agencia","",""
+"
+Este caso de prueba cubre el flujo End-to-End (E2E) de la reserva de un servicio:
+1. Login silencioso y navegación a la pestaña de Servicios.
+2. Búsqueda filtrada por Destino (Bariloche) y Tipo (Excursión).
+3. Validación de la interfaz (UI) en las cards de resultados y el detalle interno.
+4. Selección de cantidad de pasajeros.
+5. Confirmación de reserva y validación final comprobando que el carrito sume 4 ítems.
+6. Flujo de Finalización de Compra (Checkout) y carga de datos del pasajero.
+","36683","test_reserva_servicio_flujo_completo","inicio","Fri Apr 24 11:38:21 UTC 2026","passed","Fri Apr 24 11:38:58 UTC 2026","","servicios","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Traslados:
+1. Navegación y búsqueda con destino Cachi.
+2. Validación de estados del botón Ver/Cerrar Tarifario con capturas.
+3. Validación de modal Proveedores (usando selector btn-download-word).
+4. Validación de modal Detalle (idéntico a Hoteles).
+5. Validación de Tooltips al final del flujo.
+","49414","test_tarifario_traslados","tarifario","Fri Apr 24 11:41:56 UTC 2026","failed","Fri Apr 24 11:42:46 UTC 2026","","traslados","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
+1. Login y navegación a la solapa Hoteles.
+2. Búsqueda con destino Cachi.
+3. Validación estática del Tag ""Hotel Recomendado"" (Antes de alterar el scroll).
+4. Validación del estado inicial del botón Ver Tarifario.
+5. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+6. Cierre del panel y validación del retorno al estado inicial.
+7. Validación Independiente del modal ""Ver Proveedores"".
+8. Validación Independiente del modal ""Ver Detalle"".
+","38476","test_tarifario_hoteles","tarifario","Fri Apr 24 11:41:11 UTC 2026","passed","Fri Apr 24 11:41:49 UTC 2026","","t_hoteles","",""
+"","26972","test_tarifario_ofertas","tarifario","Fri Apr 24 11:44:16 UTC 2026","passed","Fri Apr 24 11:44:43 UTC 2026","","t_ofertas","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
+1. Login y navegación a la solapa Paquetes.
+2. Búsqueda con destino Buenos Aires.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación Independiente del botón de Descarga de archivo (y existencia del archivo en la carpeta de descargas).
+7. Validación Independiente del modal ""Ver Detalle"".
+","34921","test_tarifario_hoteles","tarifario","Fri Apr 24 11:39:31 UTC 2026","passed","Fri Apr 24 11:40:06 UTC 2026","","paquetes","",""
+"
+Este caso de prueba cubre el flujo End-to-End (E2E) de la cotización de un circuito (Oferta):
+1. Login silencioso y navegación a la pestaña de Ofertas.
+2. Ingreso de fecha dinámica (hoy + 7 días) y cierre del calendario.
+3. Uso de los selectores para parámetros de viaje y habitación.
+4. Validación de la estructura HTML.
+5. Avance a la pantalla final y validación visual de la tabla de cotizaciones.
+","18973","test_ofertas","inicio","Fri Apr 24 11:39:05 UTC 2026","passed","Fri Apr 24 11:39:24 UTC 2026","","ofertas","",""
