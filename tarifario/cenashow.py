@@ -226,7 +226,7 @@ def test_tarifario_cenashow(logged_in_driver):
             wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Idiomas')]")))
             li_espanol = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Español')]")))
             li_english = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'English')]")))
-            li_portuguese = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Prtuguese')]")))
+            li_portuguese = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Portuguese')]")))
             
             assert li_italian.is_displayed() and li_french.is_displayed(), "No se encontraron los idiomas correctos en la lista del tooltip"
             
