@@ -296,7 +296,7 @@ def test_tarifario(logged_in_driver):
             
             # Validamos el título y los textos exactos de las viñetas
             wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Operatividad')]")))
-            li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero, marzo, mayo, julio, septiembre, noviembre')]")))
+            li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero a marzo, mayo a julio, septiembre a noviembre')]")))
             
             assert li_temporada.is_displayed(), "No se encontraron los datos de operatividad en la lista del tooltip"
             
