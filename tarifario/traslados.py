@@ -230,7 +230,7 @@ def test_tarifario_traslados(logged_in_driver):
             # Validamos el título y los textos exactos de las viñetas
             wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Operatividad')]")))
             li_dias = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Días: lunes a miércoles, sábado a domingo')]")))
-            li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero a abril, agosto a diciembre.')]")))
+            li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero a abril, agosto a diciembre')]")))
             
             assert li_dias.is_displayed() and li_temporada.is_displayed(), "No se encontraron los datos de operatividad en la lista del tooltip"
             
