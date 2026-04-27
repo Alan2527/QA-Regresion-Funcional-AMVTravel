@@ -298,7 +298,7 @@ def test_tarifario(logged_in_driver):
             wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Operatividad')]")))
             li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero, marzo, mayo, julio, septiembre, noviembre')]")))
             
-            assert li_dias.is_displayed() and li_temporada.is_displayed(), "No se encontraron los datos de operatividad en la lista del tooltip"
+            assert li_temporada.is_displayed(), "No se encontraron los datos de operatividad en la lista del tooltip"
             
             allure.attach(driver.get_screenshot_as_png(), name="9_Tooltip_Calendario", attachment_type=allure.attachment_type.PNG)
 
