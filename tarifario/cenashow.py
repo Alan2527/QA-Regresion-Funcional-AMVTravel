@@ -228,7 +228,7 @@ def test_tarifario_cenashow(logged_in_driver):
             li_english = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'English')]")))
             li_portuguese = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Portuguese')]")))
             
-            assert li_italian.is_displayed() and li_french.is_displayed(), "No se encontraron los idiomas correctos en la lista del tooltip"
+            assert li_espanol.is_displayed() and li_french.is_displayed() and li_portuguese.is_displayed(), "No se encontraron los idiomas correctos en la lista del tooltip"
             
             allure.attach(driver.get_screenshot_as_png(), name="8_Tooltip_Idiomas", attachment_type=allure.attachment_type.PNG)
 
