@@ -28,7 +28,7 @@ jobs:
           AMV_AGENCIA_USER: ${{ secrets.AMV_AGENCIA_USER }}
 
         run: |
-         pytest tarifario/traslados.py --alluredir=allure-results || true
+         pytest tarifario/excursiones.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
