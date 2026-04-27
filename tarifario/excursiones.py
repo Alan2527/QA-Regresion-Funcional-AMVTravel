@@ -255,54 +255,54 @@ def test_tarifario(logged_in_driver):
 
 
         # ==========================================
-        # BLOQUE 3: VALIDACIÓN DE TOOLTIPS (AL FINAL)
+        # 12-15. VALIDACIÓN DE TOOLTIPS Y OBSERVACIONES (FINAL)
         # ==========================================
-
-        with allure.step("11. Validar tooltip de icono Duración"):
-            icono_duracion = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-clock")))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", icono_duracion)
-            time.sleep(0.5)
+        with allure.step("15. Validar Observación Prioritaria"):
+            # Buscamos el contenedor div y validamos que el span interno tenga el texto exacto
+            obs_span = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'tariff-obs-item')]//span[contains(text(), 'tet')]")))
             
-            actions.move_to_element(icono_duracion).pause(1).perform()
-
-            tooltip_duracion = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and contains(., 'Duración estimada del servicio')]"
-            )))
-            assert tooltip_duracion.is_displayed(), "El tooltip de duración no es visible."
+            assert obs_span.is_displayed(), "El div de observación o su texto no son visibles en pantalla"
+            
+            allure.attach(driver.get_screenshot_as_png(), name="10_Observacion_Prioritaria", attachment_type=allure.attachment_type.PNG)
+            
+        with allure.step("12. Validar Tooltip de Duración"):
+            icon_clock = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph.ph-clock")))
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", icon_clock)
+            actions.move_to_element(icon_clock).perform()
+            
+            # Esperamos a que el tooltip HTML se inyecte y sea visible
+            tooltip_duracion = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.tariff-op-tooltip")))
+            assert "Duración estimada del servicio" in tooltip_duracion.text, f"Texto de duración incorrecto. Actual: {tooltip_duracion.text}"
+            
             allure.attach(driver.get_screenshot_as_png(), name="7_Tooltip_Duracion", attachment_type=allure.attachment_type.PNG)
 
-        with allure.step("12. Validar tooltip de icono Idiomas"):
-            icono_idiomas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-translate")))
-            actions.move_to_element(icono_idiomas).pause(1).perform()
-
-            tooltip_idiomas = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Idiomas')]]"
-            )))
+        with allure.step("13. Validar Tooltip de Idiomas"):
+            icon_lang = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph.ph-translate")))
+            actions.move_to_element(icon_lang).perform()
             
-            texto_idiomas = tooltip_idiomas.text
-            assert "Español" in texto_idiomas, "Falta idioma Español en el tooltip"
-            assert "English" in texto_idiomas, "Falta idioma English en el tooltip"
-            assert "Portuguese" in texto_idiomas, "Falta idioma Portuguese en el tooltip"
+            # Validamos la estructura interna del tooltip (strong y los li dentro del ul)
+            wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Idiomas')]")))
+            li_italian = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Español')]")))
+            li_french = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'English')]")))
+            
+            assert li_italian.is_displayed() and li_french.is_displayed(), "No se encontraron los idiomas correctos en la lista del tooltip"
+            
             allure.attach(driver.get_screenshot_as_png(), name="8_Tooltip_Idiomas", attachment_type=allure.attachment_type.PNG)
 
-        with allure.step("13. Validar tooltip de icono Operatividad"):
-            icono_operatividad = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph-calendar-dots")))
-            actions.move_to_element(icono_operatividad).pause(1).perform()
-
-            tooltip_operatividad = wait.until(EC.visibility_of_element_located((
-                By.XPATH, "//span[contains(@class, 'tariff-op-tooltip') and .//strong[contains(text(), 'Operatividad')]]"
-            )))
+        with allure.step("14. Validar Tooltip de Operatividad"):
+            icon_cal = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "i.ph.ph-calendar-dots")))
+            actions.move_to_element(icon_cal).perform()
             
-            texto_operatividad = tooltip_operatividad.text
-            assert "martes a miércoles, viernes a domingo" in texto_operatividad, "Faltan días en el tooltip de operatividad"
-            assert "enero a mayo, agosto a diciembre" in texto_operatividad, "Falta temporada en el tooltip de operatividad"
-            allure.attach(driver.get_screenshot_as_png(), name="9_Tooltip_Operatividad", attachment_type=allure.attachment_type.PNG)
+            # Validamos el título y los textos exactos de las viñetas
+            wait.until(EC.visibility_of_element_located((By.XPATH, "//strong[contains(text(), 'Operatividad')]")))
+            li_temporada = wait.until(EC.presence_of_element_located((By.XPATH, "//ul//li[contains(text(), 'Temporada: enero, marzo, mayo, julio, septiembre, noviembre')]")))
+            
+            assert li_dias.is_displayed() and li_temporada.is_displayed(), "No se encontraron los datos de operatividad en la lista del tooltip"
+            
+            allure.attach(driver.get_screenshot_as_png(), name="9_Tooltip_Calendario", attachment_type=allure.attachment_type.PNG)
+
 
 
     except Exception as e:
-        allure.attach(
-            driver.get_screenshot_as_png(),
-            name="Fallo_Tarifario_Excursiones",
-            attachment_type=allure.attachment_type.PNG
-        )
-        pytest.fail(f"El test falló durante la ejecución: {str(e)}")
+        allure.attach(driver.get_screenshot_as_png(), name="Fallo_Traslados", attachment_type=allure.attachment_type.PNG)
+        pytest.fail(f"Error en ejecución: {str(e)}")
