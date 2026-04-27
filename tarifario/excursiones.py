@@ -230,16 +230,17 @@ def test_tarifario(logged_in_driver):
         with allure.step("10. Click en botón Ver Detalle y validar apertura de modal de detalle"):
             
             # ---------------------------------------------------------
-            # SELECTOR EXACTO ACTUALIZADO CON EL XPATH PROPORCIONADO
+            # SELECTOR ROBUSTO POR CLASE Y TEXTO
             # ---------------------------------------------------------
-            XPATH_DETALLE = '//*[@id="detail"]/div/p/a'
-            
-            btn_detalle = wait.until(EC.presence_of_element_located((By.XPATH, XPATH_DETALLE)))
+            btn_detalle = wait.until(EC.element_to_be_clickable((
+                By.XPATH, "//a[contains(@class, 'tariff-op-detail-btn') and contains(text(), 'Ver Detalle')]"
+            )))
             
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_detalle)
             time.sleep(1) 
             driver.execute_script("arguments[0].click();", btn_detalle)
 
+            # Esperamos a que el modal se haga visible
             modal_detalle = wait.until(EC.visibility_of_element_located((
                 By.CSS_SELECTOR, "div.modal-content"
             )))
