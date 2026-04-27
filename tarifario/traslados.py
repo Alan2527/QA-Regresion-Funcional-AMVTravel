@@ -236,9 +236,20 @@ def test_tarifario_traslados(logged_in_driver):
             
             allure.attach(driver.get_screenshot_as_png(), name="9_Tooltip_Calendario", attachment_type=allure.attachment_type.PNG)
 
+        # ==========================================
+        # PASO EXPLICITO PARA CERRAR TOOLTIPS ANTES DEL PASO 15
+        # ==========================================
+        with allure.step("14b. Validar Cierre de Tooltips"):
+            # Forzamos un clic en el body para quitar el hover y cerrar el tooltip de operatividad
+            body = wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            actions.move_to_element(body).click().perform()
+            
+            # Esperamos explícitamente a que el tooltip desaparezca (opcional pero recomendado)
+            wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "strong[contains(text(), 'Operatividad')]")))
+
         with allure.step("15. Validar Observación Prioritaria"):
-            # Buscamos el contenedor div y validamos que el span interno tenga el texto exacto
-            obs_span = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'tariff-obs-item')]//span[contains(text(), 'Test observación prioritaria.')]")))
+            # Ahora que los tooltips están cerrados, el elemento es visible y validable
+            obs_span = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'tariff-obs-item')]//span[contains(text(), 'Test observación prioritaria')]")))
             
             assert obs_span.is_displayed(), "El div de observación o su texto no son visibles en pantalla"
             
