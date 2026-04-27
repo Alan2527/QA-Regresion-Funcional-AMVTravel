@@ -1,0 +1,58 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Paquetes:
+1. Login y navegación a la solapa Paquetes.
+2. Búsqueda con destino Buenos Aires.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación Independiente del botón de Descarga de archivo (y existencia del archivo en la carpeta de descargas).
+7. Validación Independiente del modal ""Ver Detalle"".
+","36954","test_tarifario_hoteles","tarifario","Mon Apr 27 17:54:22 UTC 2026","passed","Mon Apr 27 17:54:59 UTC 2026","","paquetes","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Excursiones:
+1. Login y navegación a Excursiones.
+2. Búsqueda con destino Cachi.
+3. Validación del estado inicial del botón Ver Tarifario.
+4. Apertura del panel principal, sub-grupos (si existen) y validación de la tabla.
+5. Cierre del panel y validación del retorno al estado inicial.
+6. Validación Independiente del modal ""Ver Proveedores"".
+7. Validación Independiente del modal ""Ver Detalle"".
+8. Validación Independiente de Tooltips (Duración, Idiomas, Operatividad) al final del flujo.
+","35278","test_tarifario","tarifario","Mon Apr 27 17:55:06 UTC 2026","failed","Mon Apr 27 17:55:41 UTC 2026","","excursiones","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Cenashow:
+1. Navegación y búsqueda con destino Cachi.
+2. Validación de estados del botón Ver/Cerrar Tarifario con capturas.
+3. Validación de modal Proveedores (usando selector btn-download-word).
+4. Validación de modal Detalle (idéntico a Hoteles).
+5. Validación de Tooltips al final del flujo.
+","29892","test_tarifario_cenashow","tarifario","Mon Apr 27 17:57:12 UTC 2026","passed","Mon Apr 27 17:57:42 UTC 2026","","cenashow","",""
+"","28331","test_tarifario_ofertas","tarifario","Mon Apr 27 17:58:17 UTC 2026","passed","Mon Apr 27 17:58:45 UTC 2026","","t_ofertas","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Traslados:
+1. Navegación y búsqueda con destino Cachi.
+2. Validación de estados del botón Ver/Cerrar Tarifario con capturas.
+3. Validación de modal Proveedores (usando selector btn-download-word).
+4. Validación de modal Detalle (idéntico a Hoteles).
+5. Validación de Tooltips al final del flujo.
+","29969","test_tarifario_traslados","tarifario","Mon Apr 27 17:56:35 UTC 2026","failed","Mon Apr 27 17:57:05 UTC 2026","","traslados","",""
+"
+Este caso de prueba cubre el flujo completo de Tarifario - Hoteles:
+1. Login y navegación a la solapa Hoteles.
+2. Búsqueda con destino Cachi.
+3. Validación estática del Tag ""Hotel Recomendado"" (Antes de alterar el scroll).
+4. Validación del estado inicial del botón Ver Tarifario.
+5. Apertura del panel principal, sub-acordeón de habitaciones y validación de la tabla de tarifas.
+6. Cierre del panel y validación del retorno al estado inicial.
+7. Validación Independiente del modal ""Ver Proveedores"".
+8. Validación Independiente del modal ""Ver Detalle"".
+","38890","test_tarifario_hoteles","tarifario","Mon Apr 27 17:55:49 UTC 2026","passed","Mon Apr 27 17:56:28 UTC 2026","","t_hoteles","",""
+"
+Este caso de prueba cubre el flujo de Tarifario - Cruceros:
+1. Login y navegación a Cruceros.
+2. Búsqueda con destino Ushuaia.
+3. Validación de ciclo de vida del botón Ver/Cerrar Tarifario.
+4. Validación de la tabla de tarifas.
+5. Validación de modales (Proveedores y Detalle).
+","21117","test_tarifario_cruceros","tarifario","Mon Apr 27 17:57:48 UTC 2026","failed","Mon Apr 27 17:58:10 UTC 2026","","cruceros","",""
