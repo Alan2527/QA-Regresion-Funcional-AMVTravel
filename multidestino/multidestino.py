@@ -116,28 +116,45 @@ def test_reserva_multidestino(logged_in_driver):
             allure.attach(driver.get_screenshot_as_png(), name="6_Itinerario_Generado", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
-        # 9. QUITAR SERVICIOS
+        # 9. QUITAR SERVICIOS "NO DISPONIBLE" (DINÁMICO)
         # ==========================================
-        with allure.step("9. Quitar servicios específicos del itinerario"):
-            # Servicio 1
-            btn_remove_1 = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lvDestinations_ctrl0_lvServices_ctrl0_lnkRemove")))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_remove_1)
-            driver.execute_script("arguments[0].click();", btn_remove_1)
-            esperar_fin_de_carga()
-
-            # Servicio 2
-            btn_remove_2 = wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lvDestinations_ctrl0_lvServices_ctrl1_lnkRemove")))
-            driver.execute_script("arguments[0].click();", btn_remove_2)
-            esperar_fin_de_carga()
-
-            # Servicio 3 (Hacemos scroll primero)
-            btn_remove_3 = wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_lvDestinations_ctrl3_lvServices_ctrl1_lnkRemove")))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn_remove_3)
-            wait.until(EC.element_to_be_clickable((By.ID, "ctl00_cphMain_lvDestinations_ctrl3_lvServices_ctrl1_lnkRemove")))
-            driver.execute_script("arguments[0].click();", btn_remove_3)
-            esperar_fin_de_carga()
-
-            allure.attach(driver.get_screenshot_as_png(), name="7_Servicios_Quitados", attachment_type=allure.attachment_type.PNG)
+        with allure.step("9. Quitar dinámicamente todos los servicios 'No disponible'"):
+            # Usamos un mecanismo de seguridad para evitar un bucle infinito si algo falla en el clic
+            intentos_maximos = 15 
+            intentos = 0
+            
+            while intentos < intentos_maximos:
+                # 1. Buscamos todos los H6 que tengan el texto "No disponible" (case-insensitive por seguridad)
+                xpath_no_disp = "//h6[contains(@class, 'serviceTotalh6') and contains(translate(text(), 'NO DISPONIBLE', 'no disponible'), 'no disponible')]"
+                servicios_no_disp = driver.find_elements(By.XPATH, xpath_no_disp)
+                
+                # Si la lista está vacía, significa que ya no quedan servicios no disponibles. ¡Salimos del bucle!
+                if len(servicios_no_disp) == 0:
+                    break
+                
+                # 2. Tomamos el PRIMERO de la lista actual
+                h6_element = servicios_no_disp[0]
+                driver.execute_script("arguments[0].scrollIntoView({block:'center'});", h6_element)
+                
+                # 3. Magia de XPath: Desde el h6, subimos por el HTML (ancestor) hasta encontrar el 
+                # primer contenedor padre que tenga el botón de eliminar (lnkRemove), y agarramos ese botón.
+                xpath_btn_remove = "./ancestor::*[.//a[contains(@id, 'lnkRemove')]][1]//a[contains(@id, 'lnkRemove')]"
+                btn_remove = h6_element.find_element(By.XPATH, xpath_btn_remove)
+                
+                # 4. Clickeamos el botón de eliminar
+                wait.until(EC.element_to_be_clickable(btn_remove))
+                driver.execute_script("arguments[0].click();", btn_remove)
+                
+                # 5. Esperamos que el UpdatePanel (AJAX) termine de cargar
+                esperar_fin_de_carga()
+                time.sleep(1)  # Pequeña pausa estabilizadora del DOM
+                
+                intentos += 1
+            
+            # Validación de seguridad por si el bucle iteró demasiadas veces sin éxito
+            assert intentos < intentos_maximos, "Se alcanzó el límite de intentos borrando servicios. El script se detuvo para evitar un bucle infinito."
+            
+            allure.attach(driver.get_screenshot_as_png(), name="7_Servicios_No_Disponibles_Quitados", attachment_type=allure.attachment_type.PNG)
 
         # ==========================================
         # 10. AGREGAR SERVICIO OPCIONAL
