@@ -251,11 +251,13 @@ def test_reserva_multidestino(logged_in_driver):
             driver.execute_script("arguments[0].click();", btn_save)
             esperar_fin_de_carga()
 
-            # Validar en la tabla de resultados/reservas
-            td_pasajero = wait.until(EC.visibility_of_element_located((By.XPATH, "//table[@id='tableTab2']//td[contains(@class, 'center') and contains(text(), 'Alan Test Automático')]")))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", td_pasajero)
+            # Validar en la tabla de resultados/reservas buscando el <p> dentro del <td>
+            xpath_pasajero = "//table[@id='tableTab2']//tbody//tr//td[contains(@class, 'center')]/p[contains(text(), 'Alan Test Automático')]"
             
-            assert td_pasajero.is_displayed(), "La reserva no se encontró en la tabla final con el nombre ingresado."
+            elemento_pasajero = wait.until(EC.visibility_of_element_located((By.XPATH, xpath_pasajero)))
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", elemento_pasajero)
+            
+            assert elemento_pasajero.is_displayed(), "La reserva no se encontró en la tabla final con el nombre ingresado."
             allure.attach(driver.get_screenshot_as_png(), name="13_Reserva_Exitosa", attachment_type=allure.attachment_type.PNG)
 
     except Exception as e:
