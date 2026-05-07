@@ -60,20 +60,19 @@ def test_generar_file_desde_inbox(driver):
         # Esperamos a que la nueva pantalla empiece a cargar (podemos esperar a que aparezca el botón de guardar)
         wait.until(EC.presence_of_element_located((By.NAME, "ctl00$cphMain$btnSave")))
 
-    # ==========================================
-    # 5 y 6. COMPLETAR FORMULARIO
-    # ==========================================
-    with allure.step("5 y 6. Completar datos iniciales (País y Nombre de Grupo)"):
-        # Elegir Argentina en el Select
-        # Nota: Usamos un selector CSS que busca un select con ambas clases
-        dropdown_pais = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "select.form-control.valid")))
-        select = Select(dropdown_pais)
-        select.select_by_visible_text("Argentina")
+        # ==========================================
+        # 5 y 6. COMPLETAR FORMULARIO
+        # ==========================================
+        with allure.step("5 y 6. Completar datos iniciales (País y Nombre de Grupo)"):
+            # Elegir Argentina en el Select usando el ID ddBranch
+            dropdown_pais = wait.until(EC.element_to_be_clickable((By.ID, "ddBranch")))
+            select = Select(dropdown_pais)
+            select.select_by_visible_text("Argentina")
 
-        # Escribir el nombre del grupo
-        input_grupo = wait.until(EC.visibility_of_element_located((By.NAME, "ctl00$cphMain$txtGroupName")))
-        input_grupo.clear()
-        input_grupo.send_keys("TEST AUTOMÁTICO")
+            # Escribir el nombre del grupo
+            input_grupo = wait.until(EC.visibility_of_element_located((By.NAME, "ctl00$cphMain$txtGroupName")))
+            input_grupo.clear()
+            input_grupo.send_keys("TEST AUTOMÁTICO")
 
     # ==========================================
     # 7 y 8. VALIDAR TABLA DETALLE Y GUARDAR
