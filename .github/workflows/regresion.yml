@@ -28,7 +28,7 @@ jobs:
           AMV_AGENCIA_USER: ${{ secrets.AMV_AGENCIA_USER }}
 
         run: |
-         pytest inicio/login_admin.py inicio/login_agencia.py inicio/hoteles.py inicio/servicios.py inicio/ofertas.py tarifario/paquetes.py tarifario/excursiones.py tarifario/t_hoteles.py tarifario/traslados.py tarifario/cenashow.py tarifario/cruceros.py tarifario/t_ofertas.py multidestino/multidestino.py --alluredir=allure-results || true
+         pytest web/inicio/login_admin.py web/inicio/login_agencia.py web/inicio/hoteles.py web/inicio/servicios.py web/inicio/ofertas.py web/tarifario/paquetes.py web/tarifario/excursiones.py web/tarifario/t_hoteles.py web/tarifario/traslados.py web/tarifario/cenashow.py web/tarifario/cruceros.py web/tarifario/t_ofertas.py web/multidestino/multidestino.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
