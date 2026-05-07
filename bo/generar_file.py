@@ -74,6 +74,8 @@ def test_generar_file_desde_inbox(driver):
             input_grupo.clear()
             input_grupo.send_keys("TEST AUTOMÁTICO")
 
+            allure.attach(driver.get_screenshot_as_png(), name="Pais_NombreGrupo", attachment_type=allure.attachment_type.PNG)
+
     # ==========================================
     # 7 y 8. VALIDAR TABLA DETALLE Y GUARDAR
     # ==========================================
