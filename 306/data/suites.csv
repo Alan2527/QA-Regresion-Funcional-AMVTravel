@@ -1,9 +1,0 @@
-"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
-"
-Este caso de prueba valida el acceso principal al BackOffice (BO).
-Es un flujo BLOQUEANTE ya que el resto de las pruebas E2E del BO dependen de una sesión válida.
-1. Navegación a qa.bo.amv.travel/login.
-2. Inyección de credenciales seguras mediante GitHub Secrets.
-3. Click en ingresar.
-4. Validación de ingreso exitoso comprobando que la URL cambie a /main.
-","2628","test_login_bo_admin","bo","Thu May 07 13:47:40 UTC 2026","passed","Thu May 07 13:47:42 UTC 2026","","login_noadmin","",""
