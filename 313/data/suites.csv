@@ -1,0 +1,8 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este test valida la navegación y la estructura de la tabla de reservas en el BO:
+1. Login administrativo.
+2. Navegación mediante el menú lateral 'Reservas'.
+3. Acceso a la Bandeja de Entrada (Inbox).
+4. Validación estructural de los contenedores de la tabla.
+","9307","test_validar_tabla_reservas_inbox","bo","Thu May 07 14:47:48 UTC 2026","passed","Thu May 07 14:47:57 UTC 2026","","cotizaciones","",""
