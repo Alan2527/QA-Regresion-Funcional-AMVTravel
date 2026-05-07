@@ -27,7 +27,7 @@ def test_login_bo_admin(driver):
     with allure.step("2. Escribir credenciales seguras"):
         # Reutilizamos AMV_USER. 
         # Si la contraseña del BO es la misma que la del Front, cambiá "BO_PASS" por "AMV_PASS"
-        usuario = os.environ.get("AMV_AGENCIA_USER")
+        usuario = os.environ.get("BO_USER")
         password = os.environ.get("BO_PASS") 
 
         # Cortamos la prueba inmediatamente si GitHub no nos pasó las variables
