@@ -30,7 +30,7 @@ jobs:
           BO_USER: ${{ secrets.BO_USER }}
 
         run: |
-         pytest bo/reservas.py  --alluredir=allure-results || true
+         pytest bo/generar_file.py  --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
