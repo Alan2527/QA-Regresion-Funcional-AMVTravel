@@ -26,6 +26,7 @@ jobs:
           AMV_USER: ${{ secrets.AMV_USER }}
           AMV_PASS: ${{ secrets.AMV_PASS }}
           AMV_AGENCIA_USER: ${{ secrets.AMV_AGENCIA_USER }}
+          BO_PASS: ${{ secrets.BO_PASS }}
 
         run: |
          pytest bo/login_admin.py --alluredir=allure-results || true
