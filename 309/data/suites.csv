@@ -1,0 +1,10 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Este test valida el flujo de creación de un File a partir de un registro en el Inbox del BO:
+1. Login administrativo.
+2. Navegación a la Bandeja de Entrada (Inbox) de Reservas.
+3. Selección del primer registro pendiente.
+4. Asignación de País (Argentina) y Nombre de Grupo.
+5. Guardado y validación de persistencia de datos.
+6. Validación de carga de tablas de Destinos y Totales.
+","21520","test_generar_file_desde_inbox","bo","Thu May 07 14:05:27 UTC 2026","broken","Thu May 07 14:05:48 UTC 2026","","generar_file","",""
