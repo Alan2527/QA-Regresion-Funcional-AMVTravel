@@ -30,7 +30,7 @@ jobs:
           BO_USER: ${{ secrets.BO_USER }}
 
         run: |
-         pytest web/inicio/login_admin.py web/inicio/login_agencia.py web/inicio/hoteles.py web/inicio/servicios.py web/inicio/ofertas.py web/tarifario/paquetes.py web/tarifario/excursiones.py web/tarifario/t_hoteles.py web/tarifario/traslados.py web/tarifario/cenashow.py web/tarifario/cruceros.py web/tarifario/t_ofertas.py web/multidestino/multidestino.py bo/login_admin.py bo/login_noadmin.py bo/cotizaciones.py bo/reservas.py bo/generar_file.py  --alluredir=allure-results || true
+         pytest web/inicio/login_admin.py web/inicio/login_agencia.py web/inicio/hoteles.py web/inicio/servicios.py web/inicio/ofertas.py web/tarifario/paquetes.py web/tarifario/excursiones.py web/tarifario/t_hoteles.py web/tarifario/traslados.py web/tarifario/cenashow.py web/tarifario/cruceros.py web/tarifario/t_ofertas.py web/multidestino/multidestino.py bo/bo_login_admin.py bo/login_noadmin.py bo/cotizaciones.py bo/reservas.py bo/generar_file.py  --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
