@@ -104,7 +104,7 @@ def test_generar_file_desde_inbox(driver):
         valor_guardado = input_grupo_guardado.get_attribute("value")
         assert "TEST AUTOMÁTICO" in valor_guardado, f"El nombre del grupo no se guardó. Valor actual: {valor_guardado}"
 
-    with allure.step("10 y 11. Validar carga de tablas de Destinos y Totales"):
+    with allure.step("10, 11 y 12. Validar carga de tablas de Destinos, Totales y Costos"):
         # 10. Validar tabla Destinos
         tabla_destinos = wait.until(EC.presence_of_element_located((By.XPATH, "//div[@id='updFileDestinations']//table[contains(@class, 'table-striped')]")))
         driver.execute_script("arguments[0].scrollIntoView({block:'center'});", tabla_destinos)
@@ -118,7 +118,7 @@ def test_generar_file_desde_inbox(driver):
         allure.attach(driver.get_screenshot_as_png(), name="Tabla_Totales_OK", attachment_type=allure.attachment_type.PNG)
 
         # 12. Validar tabla Totales
-        tabla_costos = wait.until(EC.presence_of_element_located((By.XPATH, "//div[@id='updCostBySupplier']//table[contains(@class, 'table-striped')]")))
+        tabla_costos = wait.until(EC.presence_of_element_located((By.XPATH, "//div[@id='updCostBySupplier']//table")))
         driver.execute_script("arguments[0].scrollIntoView({block:'center'});", tabla_costos)
         assert tabla_costos.is_displayed(), "La tabla de Costos no se renderizó correctamente."
         allure.attach(driver.get_screenshot_as_png(), name="Tabla_Costos_OK", attachment_type=allure.attachment_type.PNG)
