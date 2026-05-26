@@ -117,9 +117,9 @@ def test_crear_orden_cobro(driver):
     # 7. GUARDADO DEL ENCABEZADO
     # ==========================================
     with allure.step("7. Guardar encabezado de la Orden de Cobro"):
-        btn_save = wait.until(EC.element_to_be_clickable((By.ID, "btnSave")))[cite: 1]
-        driver.execute_script("arguments[0].click();", btn_save)[cite: 2]
-        time.sleep(3) -- Espera de sincronización requerida por los postbacks de ASP.NET[cite: 2]
+        btn_save = wait.until(EC.element_to_be_clickable((By.ID, "btnSave")))
+        driver.execute_script("arguments[0].click();", btn_save)
+        time.sleep(3)  # Espera de sincronización requerida por los postbacks de ASP.NET
 
     # ==========================================
     # 8. IMPUTACIÓN DE SALDOS PENDIENTES
