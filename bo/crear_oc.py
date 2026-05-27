@@ -115,15 +115,19 @@ def test_crear_orden_cobro(driver):
         # Si llegó acá, el modal abrió bien. Operamos el filtro:
         search_input.click()  
         search_input.clear()
-        search_input.send_keys("hecto")  
+        search_input.send_keys("hectours")  
         
         # Sincronización asincrónica de DataTables
-        primera_celda_xpath = "//table[@id='dataCustomers']/tbody/tr[1]/td[2]"
-        wait.until(EC.text_to_be_present_in_element((By.XPATH, primera_celda_xpath), "hecto"))
-        
-        # Clic directo a la fila filtrada
-        fila_cliente = wait.until(EC.element_to_be_clickable((By.XPATH, primera_celda_xpath)))
-        driver.execute_script("arguments[0].click();", fila_cliente)
+# Esperar a que haya al menos una fila visible (DataTables cargado)
+wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#dataCustomers tbody tr")))
+
+# Esperar específicamente el cliente (case-insensitive usando XPath)
+fila_cliente = wait.until(EC.element_to_be_clickable((
+    By.XPATH,
+    "//table[@id='dataCustomers']/tbody/tr/td[2][contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'hecto')]"
+)))
+
+driver.execute_script("arguments[0].click();", fila_cliente)
         
         time.sleep(1)
         allure.attach(driver.get_screenshot_as_png(), name="5_Cliente_Seleccionado", attachment_type=allure.attachment_type.PNG)  
