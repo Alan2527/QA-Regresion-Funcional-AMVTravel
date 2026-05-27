@@ -192,33 +192,93 @@ def test_crear_orden_cobro(driver):
         allure.attach(driver.get_screenshot_as_png(), "12_Guardado", allure.attachment_type.PNG)
 
     # ==========================================
-    # 13. IMPUTAR (ROBUSTO)
+    # 13. SCROLL A TABLA
     # ==========================================
-    with allure.step("13. Imputar"):
+    with allure.step("13. Scroll a tabla imputación"):
 
-        wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_ctrlChargeOrderAllocationControl")))
+        tabla = wait.until(EC.presence_of_element_located((By.ID, "tblChargeOrderAllocation")))
 
-        botones = wait.until(EC.presence_of_all_elements_located((
+        driver.execute_script("arguments[0].scrollIntoView(true);", tabla)
+        time.sleep(2)
+
+        allure.attach(driver.get_screenshot_as_png(), "13_Scroll", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 14. VALIDAR Y CLICK BOTON FILA
+    # ==========================================
+    with allure.step("14. Click en botón de imputación"):
+
+        # validar td esperado
+        td = wait.until(EC.presence_of_element_located((
             By.CSS_SELECTOR,
-            "[id*='lnkAsignarTotal']"
+            "#tblChargeOrderAllocation td.text-center.sorting_1"
         )))
 
-        if not botones:
-            pytest.fail("No se encontraron botones de imputación")
+        # buscar botón dentro del td
+        boton = td.find_element(By.CSS_SELECTOR, "a.btn.btn-sm.usepreload")
 
-        driver.execute_script("arguments[0].click();", botones[0])
+        driver.execute_script("arguments[0].click();", boton)
 
-        allure.attach(driver.get_screenshot_as_png(), "13_Imputar", allure.attachment_type.PNG)
-
-    # ==========================================
-    # 14. APROBAR
-    # ==========================================
-    with allure.step("14. Aprobar"):
-        safe_click(wait, (By.ID, "btnApprove"))
-        safe_click(wait, (By.ID, "txtReceiptDate"))
-        safe_click(wait, (By.CSS_SELECTOR, ".day"))
-
-        safe_click(wait, (By.ID, "btnApprove"))
+        # esperar carga (loader / cambio DOM)
         time.sleep(3)
 
-        allure.attach(driver.get_screenshot_as_png(), "14_Aprobado", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "14_Click_Fila", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 15. VALIDAR TABLA INTERNA
+    # ==========================================
+    with allure.step("15. Validar tabla interna"):
+
+        tabla_interna = wait.until(EC.presence_of_element_located((
+            By.CSS_SELECTOR,
+            ".table.table-striped.table-bordered.table-hover.table-condensed.text-center.m-b-0"
+        )))
+
+        wait.until(EC.presence_of_element_located((
+            By.CSS_SELECTOR,
+            ".table.table-striped.table-bordered.table-hover.table-condensed.text-center.m-b-0 td.text-center"
+        )))
+
+        allure.attach(driver.get_screenshot_as_png(), "15_Tabla_Interna", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 16. INGRESAR FECHA HOY
+    # ==========================================
+    from datetime import datetime
+
+    with allure.step("16. Ingresar fecha actual"):
+
+        fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+
+        safe_send_keys(wait, (By.ID, "txtReceiptDate"), fecha_hoy)
+
+        allure.attach(driver.get_screenshot_as_png(), "16_Fecha", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 17. APROBAR Y APLICAR
+    # ==========================================
+    with allure.step("17. Aprobar y aplicar recibo"):
+
+        boton_aprobar = wait.until(EC.presence_of_element_located((
+            By.XPATH,
+            "//input[@value='Aprobar & Aplicar Recibo']"
+        )))
+
+        driver.execute_script("arguments[0].click();", boton_aprobar)
+
+        # esperar proceso
+        time.sleep(4)
+
+        allure.attach(driver.get_screenshot_as_png(), "17_Click_Aprobar", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 18. VALIDAR QUE DESAPARECIÓ
+    # ==========================================
+    with allure.step("18. Validar botón desapareció"):
+
+        wait.until(EC.invisibility_of_element_located((
+            By.XPATH,
+            "//input[@value='Aprobar & Aplicar Recibo']"
+        )))
+
+        allure.attach(driver.get_screenshot_as_png(), "18_Final", allure.attachment_type.PNG)
