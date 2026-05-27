@@ -49,8 +49,8 @@ def test_login_admin(driver):
         allure.attach(driver.get_screenshot_as_png(), name="Credenciales_Completas", attachment_type=allure.attachment_type.PNG)
 
     with allure.step("4. Click en el botón Ingresar"):
-        # Clickeamos el botón de ingreso
-        btn_ingresar = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@value='Ingresar']")))
+        # CORRECCIÓN: Apuntamos directamente al nuevo ID 'btnLogin' del input submit
+        btn_ingresar = wait.until(EC.element_to_be_clickable((By.ID, "btnLogin")))[cite: 4]
         btn_ingresar.click()
         
         # Damos unos segundos para que se resuelva el inicio de sesión y cargue la vista interna
