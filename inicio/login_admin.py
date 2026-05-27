@@ -11,72 +11,83 @@ from selenium.webdriver.support import expected_conditions as EC
 @allure.story("Login de usuario Administrador")
 @allure.severity(allure.severity_level.BLOCKER)
 @allure.description("""
-Este caso de prueba valida el acceso principal al sistema web de reservas con perfil Administrador.
-1. Navegación a qa.amv.travel.
-2. Inyección de credenciales seguras mediante GitHub Secrets.
-3. Validación de ingreso exitoso al portal interno.
-4. Validación de perfil Admin comprobando la existencia de los selectores de simulación de agencia.
+Valida login Admin:
+1. Navega al sitio
+2. Hace click en login
+3. Completa credenciales
+4. Ingresa al sistema
+5. Valida perfil admin
 """)
 def test_login_admin(driver):
+
     wait = WebDriverWait(driver, 20)
 
     # ==========================================
-    # 1. IR A HOME + CLICK LOGIN
+    # 1. IR A LA WEB
     # ==========================================
-    with allure.step("1. Ingresar a qa.amv.travel y click en Login"):
+    with allure.step("1. Ingresar a la web y hacer click en Login"):
         driver.get("https://qa.amv.travel/")
 
         btn_login = wait.until(EC.element_to_be_clickable((By.ID, "lnkLogin")))
         btn_login.click()
 
-        allure.attach(driver.get_screenshot_as_png(), name="1_Click_Login", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "1_click_login", allure.attachment_type.PNG)
 
     # ==========================================
-    # 2. INGRESAR CREDENCIALES
+    # 2. CREDENCIALES
     # ==========================================
-    with allure.step("2. Escribir usuario"):
+    with allure.step("2. Ingresar credenciales"):
         usuario = os.environ.get("AMV_USER")
         password = os.environ.get("AMV_PASS")
 
         if not usuario or not password:
-            pytest.fail("Error: faltan credenciales en variables de entorno")
+            pytest.fail("Faltan variables de entorno")
 
         input_user = wait.until(EC.visibility_of_element_located((By.ID, "txtUser")))
         input_user.clear()
         input_user.send_keys(usuario)
 
-        allure.attach(driver.get_screenshot_as_png(), name="2_Usuario", attachment_type=allure.attachment_type.PNG)
-
-    with allure.step("3. Escribir password"):
         input_pass = wait.until(EC.visibility_of_element_located((By.ID, "txtPassword")))
         input_pass.clear()
         input_pass.send_keys(password)
 
-        allure.attach(driver.get_screenshot_as_png(), name="3_Password", attachment_type=allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "2_credenciales", allure.attachment_type.PNG)
 
     # ==========================================
-    # 3. CLICK INGRESAR (FIX UI NUEVA)
+    # 3. CLICK LOGIN (FIX REAL)
     # ==========================================
-    with allure.step("4. Click en Ingresar al Sistema"):
+    with allure.step("3. Click en Ingresar"):
+
+        # Esperar que esté visible y habilitado
         btn_ingresar = wait.until(EC.presence_of_element_located((By.ID, "btnLogin")))
+        wait.until(lambda d: btn_ingresar.is_displayed() and btn_ingresar.is_enabled())
 
-        # Scroll por si no es visible
+        # Scroll por si está tapado
         driver.execute_script("arguments[0].scrollIntoView(true);", btn_ingresar)
         time.sleep(0.5)
 
-        # Click robusto
+        # Click por JS (evita problemas de overlay)
         driver.execute_script("arguments[0].click();", btn_ingresar)
 
-        allure.attach(driver.get_screenshot_as_png(), name="4_Click_Login", attachment_type=allure.attachment_type.PNG)
+        # Esperar navegación real
+        wait.until(EC.url_contains("amv.travel"))
+
+        allure.attach(driver.get_screenshot_as_png(), "3_post_login", allure.attachment_type.PNG)
 
     # ==========================================
-    # 4. VALIDACIÓN LOGIN OK
+    # 4. VALIDACIÓN ADMIN
     # ==========================================
-    with allure.step("5. Validar sesión Admin"):
-        selector_agencia = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.ts-wrapper.ddGuestAgency")))
-        selector_usuario = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.ts-wrapper.ddGuestUser")))
+    with allure.step("4. Validar perfil Admin"):
 
-        assert selector_agencia.is_displayed(), "No se visualiza selector de Agencia"
-        assert selector_usuario.is_displayed(), "No se visualiza selector de Usuario"
+        selector_agencia = wait.until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "div.ts-wrapper.ddGuestAgency"))
+        )
 
-        allure.attach(driver.get_screenshot_as_png(), name="5_Login_OK", attachment_type=allure.attachment_type.PNG)
+        selector_usuario = wait.until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "div.ts-wrapper.ddGuestUser"))
+        )
+
+        assert selector_agencia.is_displayed()
+        assert selector_usuario.is_displayed()
+
+        allure.attach(driver.get_screenshot_as_png(), "4_validacion_admin", allure.attachment_type.PNG)
