@@ -74,25 +74,31 @@ def test_crear_orden_cobro(driver):
         select_curr.select_by_visible_text("USD")  #[cite: 1]
         allure.attach(driver.get_screenshot_as_png(), name="4_Combos_Configurados", attachment_type=allure.attachment_type.PNG)  #[cite: 2]
 
-    # ==========================================
+# ==========================================
     # 5. INTERACCIÓN CON MODAL DE CLIENTES
     # ==========================================
     with allure.step("5. Buscar y seleccionar Cliente en el modal"):
-        wait.until(EC.element_to_be_clickable((By.ID, "txtCustomer"))).click()  #[cite: 1]
+        # 1. Clic para abrir el modal
+        wait.until(EC.element_to_be_clickable((By.ID, "txtCustomer"))).click()
         
-        magnifier = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".icon-magnifier")))  #[cite: 1]
-        actions = ActionChains(driver)
-        actions.move_to_element(magnifier).perform()  #[cite: 1]
+        # 2. Esperar que el buscador del modal aparezca y sea visible
+        search_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#dataCustomers_filter .form-control")))
+        search_input.click()
+        search_input.clear()
+        search_input.send_keys("hectours")
         
-        body = driver.find_element(By.CSS_SELECTOR, "body")  #[cite: 1]
-        actions.move_to_element_with_offset(body, 0, 0).perform()  #[cite: 1]
+        # 3. SINCRONIZACIÓN ROBUSTA: Esperamos a que la primera fila de la tabla 
+        # contenga parte del texto buscado para asegurar que DataTables ya filtró los datos
+        primera_celda_xpath = "//table[@id='dataCustomers']/tbody/tr[1]/td[2]"
+        wait.until(EC.text_to_be_present_in_element((By.XPATH, primera_celda_xpath), "hecto"))
         
-        search_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#dataCustomers_filter .form-control")))  #[cite: 1]
-        search_input.click()  #[cite: 1]
-        search_input.send_keys("hecto")  #[cite: 1]
+        # 4. Una vez confirmado que el texto cambió, le asentamos el clic a la celda
+        fila_cliente = wait.until(EC.element_to_be_clickable((By.XPATH, primera_celda_xpath)))
+        fila_cliente.click()
         
-        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".even > td:nth-child(2)"))).click()  #[cite: 1]
-        allure.attach(driver.get_screenshot_as_png(), name="5_Cliente_Seleccionado", attachment_type=allure.attachment_type.PNG)  #[cite: 2]
+        # 5. Mini pausa para que el modal procese el cierre y asigne el valor al input de atrás
+        time.sleep(1)
+        allure.attach(driver.get_screenshot_as_png(), name="5_Cliente_Seleccionado", attachment_type=allure.attachment_type.PNG)
 
     # ==========================================
     # 6. DEFINICIÓN DE MONTOS Y FLUJO DE CAJA
