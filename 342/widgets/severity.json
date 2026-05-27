@@ -1,1 +1,0 @@
-[{"uid":"ecb040b8230e49e7","name":"test_login_admin","time":{"start":1779906153769,"stop":1779906159519,"duration":5750},"status":"broken","severity":"blocker"},{"uid":"e76ca9c6a873ac7f","name":"test_login_agencia","time":{"start":1779906159895,"stop":1779906178086,"duration":18191},"status":"broken","severity":"critical"}]
