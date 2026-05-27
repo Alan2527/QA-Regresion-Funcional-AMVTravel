@@ -115,7 +115,7 @@ def test_crear_orden_cobro(driver):
         # Filtrar
         search_input.click()
         search_input.clear()
-        search_input.send_keys("hecto")
+        search_input.send_keys("hectours")
 
         # Esperar tabla cargada
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#dataCustomers tbody tr")))
@@ -123,7 +123,7 @@ def test_crear_orden_cobro(driver):
         # Esperar cliente (case insensitive)
         fila_cliente = wait.until(EC.element_to_be_clickable((
             By.XPATH,
-            "//table[@id='dataCustomers']/tbody/tr/td[2][contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'hecto')]"
+            "//table[@id='dataCustomers']/tbody/tr/td[2][contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'hectours')]"
         )))
 
         driver.execute_script("arguments[0].click();", fila_cliente)
@@ -140,9 +140,16 @@ def test_crear_orden_cobro(driver):
 
         wait.until(EC.visibility_of_element_located((By.ID, "txtDetail"))).send_keys("Test automático")
 
-        monto = wait.until(EC.visibility_of_element_located((By.ID, "txtAmount1")))
-        monto.clear()
-        monto.send_keys("2000")
+# Esperar que el campo esté disponible después del refresh del DOM
+wait.until(EC.presence_of_element_located((By.ID, "txtAmount1")))
+
+# Re-obtener el elemento (CLAVE para evitar stale)
+monto = wait.until(EC.element_to_be_clickable((By.ID, "txtAmount1")))
+
+# Interactuar
+monto.click()
+monto.clear()
+monto.send_keys("2000")
 
         allure.attach(driver.get_screenshot_as_png(), name="6_Datos", attachment_type=allure.attachment_type.PNG)
 
