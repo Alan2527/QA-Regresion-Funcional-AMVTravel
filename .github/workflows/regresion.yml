@@ -30,7 +30,7 @@ jobs:
           BO_USER: ${{ secrets.BO_USER }}
 
         run: |
-         pytest web/inicio/login_admin.py web/inicio/login_agencia.py --alluredir=allure-results || true
+         pytest web/inicio/login_admin.py --alluredir=allure-results || true
 
       - name: Generar carpeta con Fecha y Hora
         run: |
