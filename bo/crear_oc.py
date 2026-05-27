@@ -78,7 +78,8 @@ def test_crear_orden_cobro(driver):
         except:
             pass
 
-        search = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='search'])))
+        search = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='search']")))
+        search.clear()
         search.send_keys("hectours")
 
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#dataCustomers tbody tr")))
@@ -102,7 +103,7 @@ def test_crear_orden_cobro(driver):
 
         wait.until(EC.visibility_of_element_located((By.ID, "txtDetail"))).send_keys("Test automático")
 
-        # 🔥 FIX CLAVE: re-buscar el input después del refresh del DOM
+        # 🔥 Re-buscar el elemento para evitar stale
         wait.until(EC.presence_of_element_located((By.ID, "txtAmount1")))
         monto = wait.until(EC.element_to_be_clickable((By.ID, "txtAmount1")))
 
