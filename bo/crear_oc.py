@@ -178,7 +178,7 @@ def test_crear_orden_cobro(driver):
     # 11. MONTO
     # ==========================================
     with allure.step("11. Monto"):
-        safe_send_keys(wait, (By.ID, "txtAmount1"), "2000")
+        safe_send_keys(wait, (By.ID, "txtAmount1"), "9000")
 
         allure.attach(driver.get_screenshot_as_png(), "11_Monto", allure.attachment_type.PNG)
 
@@ -204,25 +204,59 @@ def test_crear_orden_cobro(driver):
         allure.attach(driver.get_screenshot_as_png(), "13_Scroll", allure.attachment_type.PNG)
 
     # ==========================================
-    # 14. VALIDAR Y CLICK BOTON FILA
+    # 14. CLICK IMPUTAR (ROBUSTO PRO)
     # ==========================================
-    with allure.step("14. Click en botón de imputación"):
+    with allure.step("14. Click imputar (multi-strategy)"):
 
-        # validar td esperado
-        td = wait.until(EC.presence_of_element_located((
-            By.CSS_SELECTOR,
-            "#tblChargeOrderAllocation td.text-center.sorting_1"
-        )))
+        clicked = False
 
-        # buscar botón dentro del td
-        boton = td.find_element(By.CSS_SELECTOR, "a.btn.btn-sm.usepreload")
+        # 🔹 1. Intentar por ID dinámico
+        try:
+            boton = wait.until(EC.presence_of_element_located((
+                By.CSS_SELECTOR,
+                "a[id*='lnkAsignarTotal']"
+            )))
+            driver.execute_script("arguments[0].click();", boton)
+            clicked = True
+        except:
+            pass
 
-        driver.execute_script("arguments[0].click();", boton)
+        # 🔹 2. Fallback: icono interno
+        if not clicked:
+            try:
+                icono = wait.until(EC.presence_of_element_located((
+                    By.CSS_SELECTOR,
+                    "a[id*='lnkAsignarTotal'] i.icon-check"
+                )))
+                driver.execute_script("arguments[0].click();", icono)
+                clicked = True
+            except:
+                pass
 
-        # esperar carga (loader / cambio DOM)
-        time.sleep(3)
+        # 🔹 3. Fallback PRO: ejecutar postback directo
+        if not clicked:
+            try:
+                boton = wait.until(EC.presence_of_element_located((
+                    By.XPATH,
+                    "//a[contains(@href,'__doPostBack') and contains(@id,'lnkAsignarTotal')]"
+                )))
 
-        allure.attach(driver.get_screenshot_as_png(), "14_Click_Fila", allure.attachment_type.PNG)
+                href = boton.get_attribute("href")
+
+                # ejecutar el postback manualmente
+                driver.execute_script(href)
+                clicked = True
+            except:
+                pass
+
+        if not clicked:
+            allure.attach(driver.get_screenshot_as_png(), "ERROR_IMPUTAR", allure.attachment_type.PNG)
+            pytest.fail("No se pudo hacer click en imputar")
+
+        # 🔥 esperar que realmente procese (CLAVE)
+        time.sleep(4)
+
+        allure.attach(driver.get_screenshot_as_png(), "14_Click_Imputar", allure.attachment_type.PNG)
 
     # ==========================================
     # 15. VALIDAR TABLA INTERNA
