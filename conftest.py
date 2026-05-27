@@ -45,7 +45,8 @@ def logged_in_driver(driver):
     input_pass.clear()
     input_pass.send_keys(password)
     
-    wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@value='Ingresar']"))).click()
+    btn = wait.until(EC.presence_of_element_located((By.ID, "btnLogin")))
+    driver.execute_script("arguments[0].click();", btn)
     
     # Esperamos a que la carga inicial del sistema pase
     time.sleep(3) 
