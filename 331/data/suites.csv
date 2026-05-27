@@ -1,0 +1,2 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","8278","test_crear_orden_cobro","bo","Wed May 27 14:09:54 UTC 2026","broken","Wed May 27 14:10:03 UTC 2026","","crear_oc","",""
