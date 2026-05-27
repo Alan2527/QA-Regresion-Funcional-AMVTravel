@@ -1,60 +1,67 @@
 import pytest
 import allure
 import os
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException, ElementNotInteractableException
 
 
-# ================================
-# HELPERS PRO
-# ================================
+# =========================
+# HELPERS ROBUSTOS
+# =========================
 
-def safe_click(wait, locator, retries=3):
-    for _ in range(retries):
+def safe_click(wait, locator):
+    for _ in range(5):
         try:
             elem = wait.until(EC.element_to_be_clickable(locator))
             elem.click()
             return
         except StaleElementReferenceException:
-            continue
-    raise Exception(f"No se pudo hacer click en {locator}")
+            time.sleep(1)
+    raise Exception(f"No se pudo hacer click: {locator}")
 
 
-def safe_send_keys(wait, locator, value, retries=3):
-    for _ in range(retries):
+def safe_send_keys(wait, locator, value):
+    for _ in range(5):
         try:
-            elem = wait.until(EC.element_to_be_clickable(locator))
+            elem = wait.until(EC.visibility_of_element_located(locator))
+
+            # Scroll al elemento
+            wait._driver.execute_script("arguments[0].scrollIntoView(true);", elem)
+            time.sleep(0.5)
+
             elem.clear()
             elem.send_keys(value)
             return
-        except StaleElementReferenceException:
-            continue
-    raise Exception(f"No se pudo escribir en {locator}")
+
+        except (StaleElementReferenceException, ElementNotInteractableException):
+            try:
+                # 🔥 fallback JS
+                elem = wait.until(EC.presence_of_element_located(locator))
+                wait._driver.execute_script("arguments[0].value = arguments[1];", elem, value)
+                return
+            except:
+                time.sleep(1)
+
+    raise Exception(f"No se pudo escribir en: {locator}")
 
 
-def wait_ajax_complete(driver, timeout=15):
-    WebDriverWait(driver, timeout).until(
-        lambda d: d.execute_script("return document.readyState") == "complete"
-    )
+def wait_table_rows(wait, table_id):
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, f"{table_id} tbody tr")))
 
 
-def wait_table_rows(wait, table_selector):
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, table_selector)))
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, f"{table_selector} tbody tr")) > 0)
-
-
-# ================================
+# =========================
 # TEST
-# ================================
+# =========================
 
 @allure.feature("Tesorería BackOffice")
 @allure.story("Crear Orden de Cobro")
 @allure.severity(allure.severity_level.CRITICAL)
 def test_crear_orden_cobro(driver):
 
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 25)
 
     # ==========================================
     # 1. LOGIN
@@ -73,7 +80,7 @@ def test_crear_orden_cobro(driver):
         safe_click(wait, (By.ID, "btnLogin"))
 
         wait.until(EC.url_contains("/main"))
-        allure.attach(driver.get_screenshot_as_png(), "login", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "1_Login", allure.attachment_type.PNG)
 
     # ==========================================
     # 2. NAVEGACIÓN
@@ -82,30 +89,37 @@ def test_crear_orden_cobro(driver):
         safe_click(wait, (By.CSS_SELECTOR, ".menu-accordion:nth-child(4) > a > span"))
         safe_click(wait, (By.CSS_SELECTOR, ".open li:nth-child(3) span"))
 
-        allure.attach(driver.get_screenshot_as_png(), "nav", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "2_Navegacion", allure.attachment_type.PNG)
 
     # ==========================================
     # 3. NUEVO
     # ==========================================
     with allure.step("3. Nuevo"):
         safe_click(wait, (By.LINK_TEXT, "Nuevo"))
-        allure.attach(driver.get_screenshot_as_png(), "nuevo", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "3_Nuevo", allure.attachment_type.PNG)
 
     # ==========================================
-    # 4. COMBOS
+    # 4. PAYMENT REF
     # ==========================================
     with allure.step("4. PaymentRef"):
         Select(wait.until(EC.element_to_be_clickable((By.ID, "ddPaymentRefs"))))\
             .select_by_visible_text("01C - TRANSFERENCIA CLIENTE DEL EXTERIOR 000001")
 
+        allure.attach(driver.get_screenshot_as_png(), "4_PaymentRef", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 5. CURRENCY
+    # ==========================================
     with allure.step("5. Currency"):
         Select(wait.until(EC.element_to_be_clickable((By.ID, "ddCurrency"))))\
             .select_by_visible_text("USD")
 
+        allure.attach(driver.get_screenshot_as_png(), "5_Currency", allure.attachment_type.PNG)
+
     # ==========================================
-    # 5. CLIENTE
+    # 6. ABRIR MODAL
     # ==========================================
-    with allure.step("6. Abrir modal"):
+    with allure.step("6. Abrir modal cliente"):
         safe_click(wait, (By.ID, "txtCustomer"))
 
         try:
@@ -113,11 +127,21 @@ def test_crear_orden_cobro(driver):
         except:
             pass
 
+        allure.attach(driver.get_screenshot_as_png(), "6_Modal", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 7. BUSCAR
+    # ==========================================
     with allure.step("7. Buscar cliente"):
         search = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='search']")))
         search.clear()
         search.send_keys("hectours")
 
+        allure.attach(driver.get_screenshot_as_png(), "7_Busqueda", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 8. SELECCIONAR CLIENTE
+    # ==========================================
     with allure.step("8. Seleccionar cliente"):
         wait_table_rows(wait, "#dataCustomers")
 
@@ -128,61 +152,73 @@ def test_crear_orden_cobro(driver):
 
         driver.execute_script("arguments[0].click();", fila)
 
-        # 🔥 esperar que el modal desaparezca (CLAVE REAL)
+        # 🔥 esperar que cierre el modal
         wait.until(EC.invisibility_of_element_located((By.ID, "dataCustomers")))
 
+        allure.attach(driver.get_screenshot_as_png(), "8_Cliente", allure.attachment_type.PNG)
+
     # ==========================================
-    # 6. DATOS
+    # 9. CAJA
     # ==========================================
     with allure.step("9. Caja"):
         Select(wait.until(EC.element_to_be_clickable((By.ID, "ddCashFlow1"))))\
             .select_by_visible_text("CAJA CHICA U$D")
 
+        allure.attach(driver.get_screenshot_as_png(), "9_Caja", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 10. DETALLE
+    # ==========================================
     with allure.step("10. Detalle"):
         safe_send_keys(wait, (By.ID, "txtDetail"), "Test automático")
 
+        allure.attach(driver.get_screenshot_as_png(), "10_Detalle", allure.attachment_type.PNG)
+
+    # ==========================================
+    # 11. MONTO
+    # ==========================================
     with allure.step("11. Monto"):
         safe_send_keys(wait, (By.ID, "txtAmount1"), "2000")
 
-        allure.attach(driver.get_screenshot_as_png(), "datos", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "11_Monto", allure.attachment_type.PNG)
 
     # ==========================================
-    # 7. GUARDAR
+    # 12. GUARDAR
     # ==========================================
     with allure.step("12. Guardar"):
         safe_click(wait, (By.ID, "btnSave"))
+        time.sleep(3)
 
-        # esperar que aparezca sección de imputación
-        wait.until(EC.presence_of_element_located((
-            By.ID,
-            "ctl00_cphMain_ctrlChargeOrderAllocationControl_lvPending"
-        )))
+        allure.attach(driver.get_screenshot_as_png(), "12_Guardado", allure.attachment_type.PNG)
 
     # ==========================================
-    # 8. IMPUTAR (PRO)
+    # 13. IMPUTAR (ROBUSTO)
     # ==========================================
     with allure.step("13. Imputar"):
 
-        wait_table_rows(wait, "#ctl00_cphMain_ctrlChargeOrderAllocationControl_lvPending")
+        wait.until(EC.presence_of_element_located((By.ID, "ctl00_cphMain_ctrlChargeOrderAllocationControl")))
 
-        botones = wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, ".icon-check"))
+        botones = wait.until(EC.presence_of_all_elements_located((
+            By.CSS_SELECTOR,
+            "[id*='lnkAsignarTotal']"
+        )))
 
         if not botones:
-            pytest.fail("No hay saldos para imputar")
+            pytest.fail("No se encontraron botones de imputación")
 
         driver.execute_script("arguments[0].click();", botones[0])
 
-        allure.attach(driver.get_screenshot_as_png(), "imputado", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "13_Imputar", allure.attachment_type.PNG)
 
     # ==========================================
-    # 9. APROBAR
+    # 14. APROBAR
     # ==========================================
     with allure.step("14. Aprobar"):
         safe_click(wait, (By.ID, "btnApprove"))
-
         safe_click(wait, (By.ID, "txtReceiptDate"))
         safe_click(wait, (By.CSS_SELECTOR, ".day"))
 
         safe_click(wait, (By.ID, "btnApprove"))
+        time.sleep(3)
 
-        allure.attach(driver.get_screenshot_as_png(), "aprobado", allure.attachment_type.PNG)
+        allure.attach(driver.get_screenshot_as_png(), "14_Aprobado", allure.attachment_type.PNG)
